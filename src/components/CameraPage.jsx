@@ -1,6 +1,6 @@
-import React, { useRef, useEffect } from 'react';
-import { Camera } from '@mediapipe/camera_utils';
-import { FaceDetection } from '@mediapipe/face_detection';
+import React, { useRef, useEffect } from "react";
+import { Camera } from "@mediapipe/camera_utils";
+import { FaceMesh } from "@mediapipe/face_mesh";
 
 const CameraPage = () => {
   const videoRef = useRef(null);
@@ -8,20 +8,22 @@ const CameraPage = () => {
 
   useEffect(() => {
     if (videoRef.current && canvasRef.current) {
-      // Initialize Face Detection
-      const faceDetection = new FaceDetection({
+      // Initialize Face Mesh
+      const faceMesh = new FaceMesh({
         locateFile: (file) =>
-          `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`,
+          `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`,
       });
 
-      faceDetection.setOptions({
-        model: 'short', // Use short-range face detection model
-        minDetectionConfidence: 0.5, // Confidence threshold
+      faceMesh.setOptions({
+        maxNumFaces: 1, // Detect up to one face
+        refineLandmarks: true, // Enable detailed landmarks (e.g., iris)
+        minDetectionConfidence: 0.5, // Minimum confidence for detection
+        minTrackingConfidence: 0.5, // Minimum confidence for tracking
       });
 
-      // Handle detection results
-      faceDetection.onResults((results) => {
-        const canvasCtx = canvasRef.current.getContext('2d');
+      // Handle Face Mesh results
+      faceMesh.onResults((results) => {
+        const canvasCtx = canvasRef.current.getContext("2d");
         canvasCtx.clearRect(
           0,
           0,
@@ -38,25 +40,39 @@ const CameraPage = () => {
           canvasRef.current.height
         );
 
-        // Draw bounding boxes for detected faces
-        results.detections.forEach((detection) => {
-          const { xCenter, yCenter, width, height } = detection.boundingBox;
+        // Visualize specific face mesh landmarks
+        if (results.multiFaceLandmarks) {
+          results.multiFaceLandmarks.forEach((landmarks) => {
+            // Mark key landmarks: nose bridge, eye corners, and ears
+            const importantLandmarks = [
+              { id: 6, color: "blue" }, // Bridge of nose
+              { id: 197, color: "blue" }, // Alternate bridge of nose
+              { id: 33, color: "green" }, // Left eye corner
+              { id: 263, color: "green" }, // Right eye corner
+              { id: 234, color: "purple" }, // Left ear
+              { id: 454, color: "purple" }, // Right ear
+            ];
 
-          canvasCtx.strokeStyle = 'blue';
-          canvasCtx.lineWidth = 4;
-          canvasCtx.strokeRect(
-            xCenter - width / 2, // Top-left x
-            yCenter - height / 2, // Top-left y
-            width, // Box width
-            height // Box height
-          );
-        });
+            importantLandmarks.forEach((landmarkData) => {
+              const { id, color } = landmarkData;
+              const landmark = landmarks[id];
+              const x = landmark.x * canvasRef.current.width;
+              const y = landmark.y * canvasRef.current.height;
+
+              // Draw the specific landmark as a colored dot
+              canvasCtx.beginPath();
+              canvasCtx.arc(x, y, 4, 0, 2 * Math.PI); // Radius of 4 for better visibility
+              canvasCtx.fillStyle = color; // Use the assigned color
+              canvasCtx.fill();
+            });
+          });
+        }
       });
 
-      // Initialize Camera
+      // Initialize the Camera
       const camera = new Camera(videoRef.current, {
         onFrame: async () => {
-          await faceDetection.send({ image: videoRef.current });
+          await faceMesh.send({ image: videoRef.current });
         },
         width: 640,
         height: 480,
@@ -69,30 +85,30 @@ const CameraPage = () => {
   return (
     <div
       style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'flex-start',
-        height: '100vh',
-        width: '100vw',
-        paddingTop: '20px',
-        boxSizing: 'border-box',
-        backgroundColor: '#fff',
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        height: "100vh",
+        width: "100vw",
+        backgroundColor: "#000", // Black background
       }}
     >
       <h1
         style={{
-          marginBottom: '20px',
-          color: '#000',
-          fontSize: '2rem',
+          marginBottom: "20px",
+          fontSize: "24px",
+          color: "#fff", // White text for contrast
+          fontWeight: "bold",
+          textAlign: "center",
         }}
       >
-        Face Detection
+        Face Mesh with Landmark Visualization
       </h1>
       <video
         ref={videoRef}
         style={{
-          display: 'none',
+          display: "none",
         }}
         playsInline
       ></video>
@@ -101,7 +117,8 @@ const CameraPage = () => {
         width="640"
         height="480"
         style={{
-          border: '2px solid black',
+          border: "2px solid #1DB954", // Modern green border
+          borderRadius: "8px",
         }}
       ></canvas>
     </div>
