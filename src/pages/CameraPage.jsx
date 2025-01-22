@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from "react";
 import { Camera } from "@mediapipe/camera_utils";
 import { FaceMesh } from "@mediapipe/face_mesh";
 import Footer from "../components/Footer";
+import ThreeCanvas from "../components/ThreeCanvas";
 
 const CameraPage = () => {
   const videoRef = useRef(null);
@@ -85,7 +86,7 @@ const CameraPage = () => {
         justifyContent: "center",
         height: "100vh",
         width: "100vw",
-        backgroundColor: "#326a72", // Updated background color
+        backgroundColor: "#326a72",
       }}
     >
       <h1
@@ -96,18 +97,52 @@ const CameraPage = () => {
           marginBottom: "20px",
         }}
       >
-        Face Mesh with Landmark Visualization
+        Face Mesh with Fixed Camera Feed
       </h1>
-      <video ref={videoRef} style={{ display: "none" }} playsInline></video>
-      <canvas
-        ref={canvasRef}
-        width="640"
-        height="480"
+      <div
         style={{
-          border: "2px solid #1DB954",
-          borderRadius: "8px",
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-around",
+          width: "100%",
         }}
-      ></canvas>
+      >
+        {/* Camera Feed */}
+        <div
+          style={{
+            width: "640px",
+            height: "480px",
+            overflow: "hidden",
+            position: "relative",
+          }}
+        >
+          <video
+            ref={videoRef}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover", // Preserve aspect ratio and fill container
+            }}
+            playsInline
+          ></video>
+          <canvas
+            ref={canvasRef}
+            width="640"
+            height="480"
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+            }}
+          ></canvas>
+        </div>
+
+        {/* 3D Canvas */}
+        <ThreeCanvas />
+      </div>
       <Footer />
     </div>
   );
