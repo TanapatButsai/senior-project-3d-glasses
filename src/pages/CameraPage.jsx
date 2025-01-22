@@ -8,20 +8,18 @@ const CameraPage = () => {
 
   useEffect(() => {
     if (videoRef.current && canvasRef.current) {
-      // Initialize Face Mesh
       const faceMesh = new FaceMesh({
         locateFile: (file) =>
           `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`,
       });
 
       faceMesh.setOptions({
-        maxNumFaces: 1, // Detect up to one face
-        refineLandmarks: true, // Enable detailed landmarks (e.g., iris)
-        minDetectionConfidence: 0.5, // Minimum confidence for detection
-        minTrackingConfidence: 0.5, // Minimum confidence for tracking
+        maxNumFaces: 1,
+        refineLandmarks: true,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5,
       });
 
-      // Handle Face Mesh results
       faceMesh.onResults((results) => {
         const canvasCtx = canvasRef.current.getContext("2d");
         canvasCtx.clearRect(
@@ -31,7 +29,6 @@ const CameraPage = () => {
           canvasRef.current.height
         );
 
-        // Draw the video frame onto the canvas
         canvasCtx.drawImage(
           results.image,
           0,
@@ -40,17 +37,15 @@ const CameraPage = () => {
           canvasRef.current.height
         );
 
-        // Visualize specific face mesh landmarks
         if (results.multiFaceLandmarks) {
           results.multiFaceLandmarks.forEach((landmarks) => {
-            // Mark key landmarks: nose bridge, eye corners, and ears
             const importantLandmarks = [
-              { id: 6, color: "blue" }, // Bridge of nose
-              { id: 197, color: "blue" }, // Alternate bridge of nose
-              { id: 33, color: "green" }, // Left eye corner
-              { id: 263, color: "green" }, // Right eye corner
-              { id: 234, color: "purple" }, // Left ear
-              { id: 454, color: "purple" }, // Right ear
+              { id: 6, color: "blue" },
+              { id: 197, color: "blue" },
+              { id: 33, color: "green" },
+              { id: 263, color: "green" },
+              { id: 234, color: "purple" },
+              { id: 454, color: "purple" },
             ];
 
             importantLandmarks.forEach((landmarkData) => {
@@ -59,17 +54,15 @@ const CameraPage = () => {
               const x = landmark.x * canvasRef.current.width;
               const y = landmark.y * canvasRef.current.height;
 
-              // Draw the specific landmark as a colored dot
               canvasCtx.beginPath();
-              canvasCtx.arc(x, y, 4, 0, 2 * Math.PI); // Radius of 4 for better visibility
-              canvasCtx.fillStyle = color; // Use the assigned color
+              canvasCtx.arc(x, y, 4, 0, 2 * Math.PI);
+              canvasCtx.fillStyle = color;
               canvasCtx.fill();
             });
           });
         }
       });
 
-      // Initialize the Camera
       const camera = new Camera(videoRef.current, {
         onFrame: async () => {
           await faceMesh.send({ image: videoRef.current });
@@ -91,33 +84,26 @@ const CameraPage = () => {
         justifyContent: "center",
         height: "100vh",
         width: "100vw",
-        backgroundColor: "#000", // Black background
+        backgroundColor: "#000",
       }}
     >
       <h1
         style={{
-          marginBottom: "20px",
+          color: "#fff",
           fontSize: "24px",
-          color: "#fff", // White text for contrast
           fontWeight: "bold",
-          textAlign: "center",
+          marginBottom: "20px",
         }}
       >
         Face Mesh with Landmark Visualization
       </h1>
-      <video
-        ref={videoRef}
-        style={{
-          display: "none",
-        }}
-        playsInline
-      ></video>
+      <video ref={videoRef} style={{ display: "none" }} playsInline></video>
       <canvas
         ref={canvasRef}
         width="640"
         height="480"
         style={{
-          border: "2px solid #1DB954", // Modern green border
+          border: "2px solid #1DB954",
           borderRadius: "8px",
         }}
       ></canvas>
