@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from "react";
 import { Camera } from "@mediapipe/camera_utils";
 import { FaceMesh } from "@mediapipe/face_mesh";
+import Footer from "../components/Footer";
 
 const CameraPage = () => {
   const videoRef = useRef(null);
@@ -84,7 +85,7 @@ const CameraPage = () => {
         justifyContent: "center",
         height: "100vh",
         width: "100vw",
-        backgroundColor: "#000",
+        backgroundColor: "#326a72", // Updated background color
       }}
     >
       <h1
@@ -107,6 +108,7 @@ const CameraPage = () => {
           borderRadius: "8px",
         }}
       ></canvas>
+      <Footer />
     </div>
   );
 };
