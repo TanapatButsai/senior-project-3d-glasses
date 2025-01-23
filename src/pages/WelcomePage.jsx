@@ -11,6 +11,10 @@ const WelcomePage = () => {
     navigate("/camera");
   };
 
+  const handleModelViewerClick = () => {
+    navigate("/model-viewer");
+  };
+
   return (
     <div
       style={{
@@ -25,8 +29,22 @@ const WelcomePage = () => {
         boxSizing: "border-box",
       }}
     >
-      <Header title="Welcome to the 3D Glasses App" />
-      <Button label="Open Camera" onClick={handleCameraClick} />
+      <Header title="3D Glasses Try-on App" />
+      
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "20px", // Adds spacing between buttons
+          marginTop: "20px", // Adds spacing between header and buttons
+        }}
+      >
+        <Button label="Open Camera" onClick={handleCameraClick} />
+        <Button label="Model Viewer" onClick={handleModelViewerClick} />
+      </div>
+
       <Footer />
     </div>
   );

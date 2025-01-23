@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from "react";
 import { Camera } from "@mediapipe/camera_utils";
 import { FaceMesh } from "@mediapipe/face_mesh";
 import Footer from "../components/Footer";
+import Header from "../components/Header";
 import ThreeCanvas from "../components/ThreeCanvas";
 
 const CameraPage = () => {
@@ -89,6 +90,7 @@ const CameraPage = () => {
         backgroundColor: "#326a72",
       }}
     >
+      <Header title="3D Glasses Try-on App" />
       <h1
         style={{
           color: "#fff",
@@ -111,10 +113,13 @@ const CameraPage = () => {
         {/* Camera Feed */}
         <div
           style={{
-            width: "640px",
-            height: "480px",
+            width: "800px", // Upscaled width
+            height: "600px", // Upscaled height
+            border: "10px solid black", // Black frame
+            borderRadius: "8px", // Rounded corners
             overflow: "hidden",
             position: "relative",
+            backgroundColor: "#000", // Background for empty areas
           }}
         >
           <video
@@ -128,8 +133,8 @@ const CameraPage = () => {
           ></video>
           <canvas
             ref={canvasRef}
-            width="640"
-            height="480"
+            width="800"
+            height="600"
             style={{
               position: "absolute",
               top: 0,
@@ -141,7 +146,7 @@ const CameraPage = () => {
         </div>
 
         {/* 3D Canvas */}
-        <ThreeCanvas />
+        {/* <ThreeCanvas /> */}
       </div>
       <Footer />
     </div>
