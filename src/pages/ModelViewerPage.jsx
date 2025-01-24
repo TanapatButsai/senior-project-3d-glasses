@@ -34,14 +34,55 @@ const ModelViewerPage = () => {
     let model;
 
     console.log("Loading the 3D model...");
+  
+    // loader.load(
+    //   "/models/glasses.glb", // Path to your 3D model
+    //   (gltf) => {
+    //     model = gltf.scene;
+    
+    //     // Calculate bounding box
+    //     const boundingBox = new THREE.Box3().setFromObject(model);
+    
+    //     // Get the center of the bounding box
+    //     const center = boundingBox.getCenter(new THREE.Vector3());
+    
+    //     // Offset the model by the center to align it to (0, 0, 0)
+    //     model.position.set(-center.x, -center.y, -center.z);
+    
+    //     // Calculate model size and scale it to fit within a standard size
+    //     const size = boundingBox.getSize(new THREE.Vector3());
+    //     const maxDimension = Math.max(size.x, size.y, size.z);
+    //     const scaleFactor = 2 / maxDimension; // Adjust this to fit the model nicely
+    //     model.scale.set(scaleFactor, scaleFactor, scaleFactor);
+    
+    //     scene.add(model);
+    
+    //     console.log("3D model loaded and centered successfully!", model);
+    //   },
+    //   undefined,
+    //   (error) => {
+    //     console.error("Error loading 3D model:", error);
+    //   }
+    // );
+    
+    
     loader.load(
       "/models/cartoon_glasses.glb", // Update with the path to your .glb file
+      // "/models/apple_ar_glasses_concept_art.glb", // Update with the path to your .glb file
       (gltf) => {
         model = gltf.scene;
 
-        // Scale and position the model
-        model.scale.set(1, 1, 1); // Adjust model scale
-        model.position.set(0, 0, 0); // Center the model
+        // Automatically scale the model to fit within the camera's view
+        const boundingBox = new THREE.Box3().setFromObject(model);
+        const size = boundingBox.getSize(new THREE.Vector3());
+        const maxDimension = Math.max(size.x, size.y, size.z);
+        const scaleFactor = 2 / maxDimension; // Adjust scale factor as needed
+        model.scale.set(scaleFactor, scaleFactor, scaleFactor);
+
+        // Center the model in the scene
+        const center = boundingBox.getCenter(new THREE.Vector3());
+        model.position.set(-center.x, -center.y, -center.z);
+
         scene.add(model);
 
         console.log("3D model loaded successfully!", model);
@@ -78,6 +119,7 @@ const ModelViewerPage = () => {
     <div
       style={{
         display: "flex",
+        flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
         height: "100vh",
@@ -85,7 +127,7 @@ const ModelViewerPage = () => {
         backgroundColor: "#326a72", // Dark background for contrast
       }}
     >
-      
+      <Header title="3D Model Viewer" />
       <div
         ref={canvasRef}
         style={{
@@ -95,7 +137,7 @@ const ModelViewerPage = () => {
           borderRadius: "8px",
         }}
       />
-    <Footer/>
+      <Footer />
     </div>
   );
 };

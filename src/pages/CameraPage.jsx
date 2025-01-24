@@ -127,7 +127,7 @@ const CameraPage = () => {
             style={{
               width: "100%",
               height: "100%",
-              objectFit: "cover", // Preserve aspect ratio and fill container
+              objectFit: "cover",
             }}
             playsInline
           ></video>
