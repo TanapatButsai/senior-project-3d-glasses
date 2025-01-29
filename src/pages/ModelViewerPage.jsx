@@ -6,46 +6,59 @@ import Footer from "../components/Footer";
 
 const ModelViewerPage = () => {
   const canvasRef = useRef(null);
-  const [selectedModel, setSelectedModel] = useState("model1.glb"); // Default model
+  const [models, setModels] = useState([]); // Store models from backend
+  const [selectedModel, setSelectedModel] = useState(""); // Selected model
+  let scene, camera, renderer, model;
 
   useEffect(() => {
-    if (!canvasRef.current) return;
+    // Fetch models from backend
+    const fetchModels = async () => {
+      try {
+        const response = await fetch("http://localhost:5050/models");
+        const data = await response.json();
+        setModels(data);
 
-    // Create a Three.js scene
-    const scene = new THREE.Scene();
+        if (data.length > 0) {
+          setSelectedModel(data[0].file_path); // Default to first model
+        }
+      } catch (error) {
+        console.error("Error fetching models:", error);
+      }
+    };
 
-    // Set up a camera
-    const camera = new THREE.PerspectiveCamera(75, 640 / 480, 0.1, 1000);
-    camera.position.z = 5;
+    fetchModels();
+  }, []);
 
-    // Set up a renderer
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+  useEffect(() => {
+    if (!canvasRef.current || !selectedModel) return;
+
+    // Three.js scene setup
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(75, 640 / 480, 0.1, 1000);
+    camera.position.set(0, 1, 5);
+
+    renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(640, 480);
     canvasRef.current.appendChild(renderer.domElement);
 
-    // Add ambient light
     const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
     scene.add(ambientLight);
 
-    // Add directional light
     const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
     directionalLight.position.set(5, 10, 7.5).normalize();
     scene.add(directionalLight);
 
-    let model;
     const loader = new GLTFLoader();
 
-    const loadModel = (modelName) => {
-      if (model) {
-        scene.remove(model); // Remove the previous model
-      }
+    const loadModel = (modelUrl) => {
+      if (model) scene.remove(model);
 
       loader.load(
-        `/models/${modelName}`, // Dynamic path based on selected model
+        modelUrl,
         (gltf) => {
           model = gltf.scene;
 
-          // Scale and position the model
+          // Scale and center model
           const boundingBox = new THREE.Box3().setFromObject(model);
           const size = boundingBox.getSize(new THREE.Vector3());
           const center = boundingBox.getCenter(new THREE.Vector3());
@@ -56,34 +69,22 @@ const ModelViewerPage = () => {
           scene.add(model);
         },
         undefined,
-        (error) => {
-          console.error("Error loading 3D model:", error);
-        }
+        (error) => console.error("Error loading 3D model:", error)
       );
     };
 
-    // Load the default model
-    loadModel(selectedModel);
+    loadModel(`http://localhost:5050/models/${selectedModel}`);
 
-    // Animation loop
     const animate = () => {
       requestAnimationFrame(animate);
-
-      // Optional: Rotate the model
-      if (model) {
-        model.rotation.y += 0.01;
-      }
-
+      if (model) model.rotation.y += 0.01;
       renderer.render(scene, camera);
     };
     animate();
 
-    // Cleanup on component unmount
     return () => {
       renderer.dispose();
-      if (canvasRef.current) {
-        canvasRef.current.removeChild(renderer.domElement);
-      }
+      if (canvasRef.current) canvasRef.current.innerHTML = "";
     };
   }, [selectedModel]);
 
@@ -93,43 +94,71 @@ const ModelViewerPage = () => {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "center",
+        justifyContent: "space-between",
         height: "100vh",
         width: "100vw",
         backgroundColor: "#326a72",
+        padding: "20px",
+        boxSizing: "border-box",
       }}
     >
       <Header title="3D Glasses Model Viewer" />
-      <div>
-        <label htmlFor="modelSelect" style={{ color: "#fff", marginRight: "10px" }}>
-          Select Glasses Model:
-        </label>
-        <select
-          id="modelSelect"
-          value={selectedModel}
-          onChange={(e) => setSelectedModel(e.target.value)}
-          style={{
-            padding: "8px",
-            fontSize: "16px",
-            borderRadius: "4px",
-            border: "1px solid #ccc",
-          }}
-        >
-          <option value="apple_ar_glasses_concept_art.glb">apple_ar_glasses_concept_art.glb</option>
-          <option value="cartoon_glasses.glb">cartoon_glasses.glb</option>
-          <option value="glasses.glb">glasses.glb</option>
-        </select>
-      </div>
       <div
-        ref={canvasRef}
         style={{
-          width: "640px",
-          height: "480px",
-          border: "2px solid #1DB954",
-          borderRadius: "8px",
-          marginTop: "20px",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          flex: 1,
+          width: "100%",
+          padding: "20px",
         }}
-      />
+      >
+        {/* Dropdown for Selecting Models */}
+        <div style={{ marginBottom: "20px", textAlign: "center" }}>
+          <label
+            htmlFor="modelSelect"
+            style={{
+              color: "#fff",
+              fontSize: "18px",
+              marginRight: "10px",
+              fontWeight: "bold",
+            }}
+          >
+            Select Glasses Model:
+          </label>
+          <select
+            id="modelSelect"
+            value={selectedModel}
+            onChange={(e) => setSelectedModel(e.target.value)}
+            style={{
+              padding: "10px",
+              fontSize: "16px",
+              borderRadius: "6px",
+              border: "1px solid #ccc",
+              backgroundColor: "#fff",
+            }}
+          >
+            {models.map((model) => (
+              <option key={model.file_path} value={model.file_path}>
+                {model.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* 3D Model Viewer */}
+        <div
+          ref={canvasRef}
+          style={{
+            width: "640px",
+            height: "480px",
+            border: "2px solid #1DB954",
+            borderRadius: "8px",
+            backgroundColor: "#000",
+          }}
+        />
+      </div>
       <Footer />
     </div>
   );
