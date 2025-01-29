@@ -6,19 +6,17 @@ const path = require("path");
 const fs = require("fs");
 
 const app = express();
-const PORT = process.env.PORT || 5050; // Change to 5050 or any other free port
+const PORT = 5050;
 
-
-// Enable CORS (allow frontend to talk to backend)
+// Enable CORS
 app.use(cors());
-app.use(express.json());
 
-// PostgreSQL Database Connection
+// PostgreSQL Configuration
 const pool = new Pool({
   user: "postgres",
   host: "localhost",
-  database: "glasses_db",
-  password: "yourpassword", // Replace with your actual password
+  database: "glasses_try_on", // Updated database name
+  password: "yourpassword",   // Replace with your database password
   port: 5432,
 });
 
@@ -30,50 +28,50 @@ if (!fs.existsSync(UPLOADS_DIR)) {
 
 // Configure Multer for file uploads
 const storage = multer.diskStorage({
-  destination: UPLOADS_DIR,
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname)); // Unique filename
-  },
-});
+    destination: UPLOADS_DIR,
+    filename: (req, file, cb) => {
+      const safeFilename = file.originalname.replace(/\s+/g, "_"); // Replace spaces with underscores
+      cb(null, Date.now() + "_" + safeFilename); // Ensure unique filename
+    },
+  });
+  
 const upload = multer({ storage });
 
-// File Upload API (Upload 3D Model)
+// POST /upload - Upload and save a model
 app.post("/upload", upload.single("file"), async (req, res) => {
-  const { file } = req;
-  const { modelName } = req.body;
-
-  if (!file || !modelName) {
-    return res.status(400).json({ message: "File and model name are required." });
-  }
-
-  try {
-    await pool.query(
-      "INSERT INTO models (name, file_path) VALUES ($1, $2)",
-      [modelName, file.filename]
-    );
-    res.json({ message: "Model uploaded successfully!" });
-  } catch (error) {
-    console.error("Error saving model:", error);
-    res.status(500).json({ message: "Internal server error." });
-  }
-});
-
-// Fetch all models from the database
-app.get("/models", async (req, res) => {
+    const { file } = req;
+    const { modelName, type } = req.body;
+  
+    if (!file || !modelName || !type) {
+      return res.status(400).json({ message: "All fields are required: model name, type, and file." });
+    }
+  
     try {
-      const result = await pool.query("SELECT name, file_path FROM models");
-      res.json(result.rows); // Send models as JSON
+      await pool.query(
+        "INSERT INTO glasses (glasses_id, name, type, model_file, created_at, updated_at, try_count) VALUES (gen_random_uuid(), $1, $2, $3, NOW(), NOW(), 0)",
+        [modelName, type, file.filename]
+      );
+  
+      res.json({ message: "Model uploaded successfully!" });
     } catch (error) {
-      console.error("Error fetching models:", error);
-      res.status(500).json({ message: "Internal server error" });
+      console.error("Error saving model:", error);
+      res.status(500).json({ message: "Internal server error." });
     }
   });
   
 
-// Serve uploaded models (3D files)
-// app.use("/models", express.static(UPLOADS_DIR));
-
-// Serve uploaded models from backend/uploads
+app.get("/models", async (req, res) => {
+    try {
+      const result = await pool.query("SELECT name, type, model_file FROM glasses");
+      res.json(result.rows); // Ensure this returns an array
+    } catch (error) {
+      console.error("Error retrieving models:", error);
+      res.status(500).json({ message: "Internal server error." });
+    }
+  });
+  
+// Serve uploaded models
+// Ensure Express serves the 'uploads' directory correctly
 app.use("/models", express.static(path.join(__dirname, "uploads")));
 
 

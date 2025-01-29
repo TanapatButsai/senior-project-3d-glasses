@@ -1,14 +1,18 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 
 const ModelViewerPage = () => {
   const canvasRef = useRef(null);
-  const [models, setModels] = useState([]); // Store models from backend
-  const [selectedModel, setSelectedModel] = useState(""); // Selected model
-  let scene, camera, renderer, model;
+  const sceneRef = useRef(null);
+  const modelRef = useRef(null);
+  const rendererRef = useRef(null);
+  const cameraRef = useRef(null);
+  const [models, setModels] = useState([]);
+  const [selectedModel, setSelectedModel] = useState("");
 
   useEffect(() => {
     // Fetch models from backend
@@ -16,10 +20,10 @@ const ModelViewerPage = () => {
       try {
         const response = await fetch("http://localhost:5050/models");
         const data = await response.json();
-        setModels(data);
 
+        setModels(data);
         if (data.length > 0) {
-          setSelectedModel(data[0].file_path); // Default to first model
+          setSelectedModel(data[0].model_file); // Default model
         }
       } catch (error) {
         console.error("Error fetching models:", error);
@@ -32,59 +36,80 @@ const ModelViewerPage = () => {
   useEffect(() => {
     if (!canvasRef.current || !selectedModel) return;
 
-    // Three.js scene setup
-    scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(75, 640 / 480, 0.1, 1000);
-    camera.position.set(0, 1, 5);
+    let scene = sceneRef.current;
+    let renderer = rendererRef.current;
+    let camera = cameraRef.current;
 
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(640, 480);
-    canvasRef.current.appendChild(renderer.domElement);
+    if (!scene) {
+      // ✅ Initialize Scene Only Once
+      scene = new THREE.Scene();
+      sceneRef.current = scene;
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
-    scene.add(ambientLight);
+      camera = new THREE.PerspectiveCamera(75, 640 / 480, 0.1, 1000);
+      camera.position.set(0, 1, 5);
+      cameraRef.current = camera;
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-    directionalLight.position.set(5, 10, 7.5).normalize();
-    scene.add(directionalLight);
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(640, 480);
+      canvasRef.current.appendChild(renderer.domElement);
+      rendererRef.current = renderer;
+
+      // Lights
+      const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
+      scene.add(ambientLight);
+
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+      directionalLight.position.set(5, 10, 7.5).normalize();
+      scene.add(directionalLight);
+    }
 
     const loader = new GLTFLoader();
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath("https://www.gstatic.com/draco/v1/");
+    loader.setDRACOLoader(dracoLoader);
 
-    const loadModel = (modelUrl) => {
-      if (model) scene.remove(model);
+    const loadModel = (modelName) => {
+      if (modelRef.current) {
+        scene.remove(modelRef.current);
+        modelRef.current = null; // Clear reference
+      }
+
+      const modelUrl = `http://localhost:5050/models/${encodeURIComponent(modelName)}`;
 
       loader.load(
         modelUrl,
         (gltf) => {
-          model = gltf.scene;
+          const model = gltf.scene;
 
-          // Scale and center model
+          // Auto scale the model
           const boundingBox = new THREE.Box3().setFromObject(model);
           const size = boundingBox.getSize(new THREE.Vector3());
-          const center = boundingBox.getCenter(new THREE.Vector3());
           const scaleFactor = 2 / Math.max(size.x, size.y, size.z);
           model.scale.set(scaleFactor, scaleFactor, scaleFactor);
-          model.position.set(-center.x, -center.y, -center.z);
+
+          model.position.set(-boundingBox.getCenter(new THREE.Vector3()).x, -boundingBox.getCenter(new THREE.Vector3()).y, -boundingBox.getCenter(new THREE.Vector3()).z);
 
           scene.add(model);
+          modelRef.current = model;
         },
         undefined,
-        (error) => console.error("Error loading 3D model:", error)
+        (error) => {
+          console.error("Error loading 3D model:", error);
+        }
       );
     };
 
-    loadModel(`http://localhost:5050/models/${selectedModel}`);
+    loadModel(selectedModel);
 
     const animate = () => {
       requestAnimationFrame(animate);
-      if (model) model.rotation.y += 0.01;
+      if (modelRef.current) modelRef.current.rotation.y += 0.01;
       renderer.render(scene, camera);
     };
     animate();
 
     return () => {
-      renderer.dispose();
-      if (canvasRef.current) canvasRef.current.innerHTML = "";
+      renderer.setAnimationLoop(null);
     };
   }, [selectedModel]);
 
@@ -132,15 +157,15 @@ const ModelViewerPage = () => {
             value={selectedModel}
             onChange={(e) => setSelectedModel(e.target.value)}
             style={{
-              padding: "10px",
+              padding: "8px",
               fontSize: "16px",
-              borderRadius: "6px",
+              borderRadius: "4px",
               border: "1px solid #ccc",
-              backgroundColor: "#fff",
+              cursor: "pointer",
             }}
           >
             {models.map((model) => (
-              <option key={model.file_path} value={model.file_path}>
+              <option key={model.glasses_id} value={model.model_file}>
                 {model.name}
               </option>
             ))}
