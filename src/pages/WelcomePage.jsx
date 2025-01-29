@@ -15,6 +15,10 @@ const WelcomePage = () => {
     navigate("/model-viewer");
   };
 
+  const handleModelUploadClick = () => {
+    navigate("/model-upload");
+  };
+
   return (
     <div
       style={{
@@ -43,6 +47,7 @@ const WelcomePage = () => {
       >
         <Button label="Open Camera" onClick={handleCameraClick} />
         <Button label="Model Viewer" onClick={handleModelViewerClick} />
+        <Button label="Model Upload" onClick={handleModelUploadClick} />
       </div>
 
       <Footer />
