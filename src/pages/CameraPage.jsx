@@ -1,13 +1,108 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { Camera } from "@mediapipe/camera_utils";
 import { FaceMesh } from "@mediapipe/face_mesh";
-import Footer from "../components/Footer";
+import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import Header from "../components/Header";
-import ThreeCanvas from "../components/ThreeCanvas";
+import Footer from "../components/Footer";
 
 const CameraPage = () => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const sceneRef = useRef(null);
+  const rendererRef = useRef(null);
+  const camera3DRef = useRef(null);
+  const glassesModelRef = useRef(null);
+  const [models, setModels] = useState([]);
+  const [selectedModel, setSelectedModel] = useState("");
+
+  useEffect(() => {
+    // Fetch available models from backend
+    const fetchModels = async () => {
+      try {
+        const response = await fetch("http://localhost:5050/models");
+        const data = await response.json();
+        setModels(data);
+        if (data.length > 0) setSelectedModel(data[0].model_file);
+      } catch (error) {
+        console.error("Error fetching models:", error);
+      }
+    };
+
+    fetchModels();
+  }, []);
+
+  useEffect(() => {
+    if (!canvasRef.current || !selectedModel) return;
+
+    let scene = sceneRef.current;
+    let renderer = rendererRef.current;
+    let camera3D = camera3DRef.current;
+
+    if (!scene) {
+      scene = new THREE.Scene();
+      sceneRef.current = scene;
+
+      camera3D = new THREE.PerspectiveCamera(75, 800 / 600, 0.1, 1000);
+      camera3D.position.set(0, 0, 5);
+      camera3DRef.current = camera3D;
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(800, 600);
+      renderer.setClearColor(0x000000, 0); // Transparent background
+      canvasRef.current.appendChild(renderer.domElement);
+      rendererRef.current = renderer;
+
+      const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
+      scene.add(ambientLight);
+
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+      directionalLight.position.set(5, 10, 7.5).normalize();
+      scene.add(directionalLight);
+    }
+
+    const loader = new GLTFLoader();
+
+    const loadModel = (modelFile) => {
+      if (glassesModelRef.current) {
+        scene.remove(glassesModelRef.current);
+        glassesModelRef.current = null;
+      }
+
+      const modelUrl = `http://localhost:5050/models/${encodeURIComponent(modelFile)}`;
+
+      loader.load(
+        modelUrl,
+        (gltf) => {
+          const model = gltf.scene;
+
+          // Normalize model size
+          const boundingBox = new THREE.Box3().setFromObject(model);
+          const size = boundingBox.getSize(new THREE.Vector3());
+          const scaleFactor = 1.5 / Math.max(size.x, size.y, size.z);
+          model.scale.set(scaleFactor, scaleFactor, scaleFactor);
+
+          scene.add(model);
+          glassesModelRef.current = model;
+        },
+        undefined,
+        (error) => console.error("Error loading 3D model:", error)
+      );
+    };
+
+    loadModel(selectedModel);
+
+    const animate = () => {
+      requestAnimationFrame(animate);
+      if (glassesModelRef.current) glassesModelRef.current.rotation.y += 0.01; // Optional rotation
+      renderer.render(scene, camera3D);
+    };
+    animate();
+
+    return () => {
+      renderer.setAnimationLoop(null);
+    };
+  }, [selectedModel]);
 
   useEffect(() => {
     if (videoRef.current && canvasRef.current) {
@@ -24,45 +119,39 @@ const CameraPage = () => {
       });
 
       faceMesh.onResults((results) => {
-        const canvasCtx = canvasRef.current.getContext("2d");
-        canvasCtx.clearRect(
-          0,
-          0,
-          canvasRef.current.width,
-          canvasRef.current.height
-        );
-
-        canvasCtx.drawImage(
-          results.image,
-          0,
-          0,
-          canvasRef.current.width,
-          canvasRef.current.height
-        );
+        if (!glassesModelRef.current) return;
 
         if (results.multiFaceLandmarks) {
-          results.multiFaceLandmarks.forEach((landmarks) => {
-            const importantLandmarks = [
-              { id: 6, color: "blue" },
-              { id: 197, color: "blue" },
-              { id: 33, color: "green" },
-              { id: 263, color: "green" },
-              { id: 234, color: "purple" },
-              { id: 454, color: "purple" },
-            ];
+          const landmarks = results.multiFaceLandmarks[0];
 
-            importantLandmarks.forEach((landmarkData) => {
-              const { id, color } = landmarkData;
-              const landmark = landmarks[id];
-              const x = landmark.x * canvasRef.current.width;
-              const y = landmark.y * canvasRef.current.height;
+          const noseBridge = landmarks[6];
+          const leftEye = landmarks[33];
+          const rightEye = landmarks[263];
 
-              canvasCtx.beginPath();
-              canvasCtx.arc(x, y, 4, 0, 2 * Math.PI);
-              canvasCtx.fillStyle = color;
-              canvasCtx.fill();
-            });
-          });
+          if (noseBridge && leftEye && rightEye) {
+            // Position
+            const positionX = (noseBridge.x - 0.5) * 10;
+            const positionY = -(noseBridge.y - 0.5) * 10;
+            glassesModelRef.current.position.set(positionX, positionY, 0);
+
+            // Scale
+            const eyeDistance = Math.sqrt(
+              Math.pow(rightEye.x - leftEye.x, 2) +
+              Math.pow(rightEye.y - leftEye.y, 2)
+            );
+            glassesModelRef.current.scale.set(
+              eyeDistance * 10,
+              eyeDistance * 10,
+              eyeDistance * 10
+            );
+
+            // Rotation
+            const angle = Math.atan2(
+              rightEye.y - leftEye.y,
+              rightEye.x - leftEye.x
+            );
+            glassesModelRef.current.rotation.set(0, 0, angle);
+          }
         }
       });
 
@@ -70,8 +159,8 @@ const CameraPage = () => {
         onFrame: async () => {
           await faceMesh.send({ image: videoRef.current });
         },
-        width: 640,
-        height: 480,
+        width: 800,
+        height: 600,
       });
 
       camera.start();
@@ -99,27 +188,61 @@ const CameraPage = () => {
           marginBottom: "20px",
         }}
       >
-        Face Mesh with Fixed Camera Feed
+        Face Mesh with 3D Glasses
       </h1>
+
+      {/* Dropdown for Selecting Models */}
+      <div style={{ marginBottom: "20px" }}>
+        <label
+          htmlFor="modelSelect"
+          style={{
+            color: "#fff",
+            fontSize: "18px",
+            marginRight: "10px",
+            fontWeight: "bold",
+          }}
+        >
+          Select Glasses Model:
+        </label>
+        <select
+          id="modelSelect"
+          value={selectedModel}
+          onChange={(e) => setSelectedModel(e.target.value)}
+          style={{
+            padding: "8px",
+            fontSize: "16px",
+            borderRadius: "4px",
+            border: "1px solid #ccc",
+          }}
+        >
+          {models.map((model) => (
+            <option key={model.glasses_id} value={model.model_file}>
+              {model.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Camera and 3D Model Overlay */}
       <div
         style={{
           display: "flex",
           flexDirection: "row",
           alignItems: "center",
-          justifyContent: "space-around",
-          width: "100%",
+          justifyContent: "center",
+          gap: "20px",
         }}
       >
         {/* Camera Feed */}
         <div
           style={{
-            width: "800px", // Upscaled width
-            height: "600px", // Upscaled height
-            border: "10px solid black", // Black frame
-            borderRadius: "8px", // Rounded corners
+            width: "800px",
+            height: "600px",
+            border: "10px solid black",
+            borderRadius: "8px",
             overflow: "hidden",
             position: "relative",
-            backgroundColor: "#000", // Background for empty areas
+            backgroundColor: "#000",
           }}
         >
           <video
@@ -144,10 +267,8 @@ const CameraPage = () => {
             }}
           ></canvas>
         </div>
-
-        {/* 3D Canvas */}
-        {/* <ThreeCanvas /> */}
       </div>
+
       <Footer />
     </div>
   );
