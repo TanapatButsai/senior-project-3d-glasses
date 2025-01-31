@@ -16,8 +16,8 @@ const CameraPage = () => {
   const [models, setModels] = useState([]);
   const [selectedModel, setSelectedModel] = useState("");
 
+  // Fetch models from backend
   useEffect(() => {
-    // Fetch available models from backend
     const fetchModels = async () => {
       try {
         const response = await fetch("http://localhost:5050/models");
@@ -32,6 +32,7 @@ const CameraPage = () => {
     fetchModels();
   }, []);
 
+  // Initialize 3D scene and load model
   useEffect(() => {
     if (!canvasRef.current || !selectedModel) return;
 
@@ -49,7 +50,7 @@ const CameraPage = () => {
 
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
       renderer.setSize(800, 600);
-      renderer.setClearColor(0x000000, 0); // Transparent background
+      renderer.setClearColor(0x000000, 0);
       canvasRef.current.appendChild(renderer.domElement);
       rendererRef.current = renderer;
 
@@ -62,109 +63,95 @@ const CameraPage = () => {
     }
 
     const loader = new GLTFLoader();
+    const modelUrl = `http://localhost:5050/models/${encodeURIComponent(selectedModel)}`;
 
-    const loadModel = (modelFile) => {
-      if (glassesModelRef.current) {
-        scene.remove(glassesModelRef.current);
-        glassesModelRef.current = null;
-      }
-
-      const modelUrl = `http://localhost:5050/models/${encodeURIComponent(modelFile)}`;
-
-      loader.load(
-        modelUrl,
-        (gltf) => {
-          const model = gltf.scene;
-
-          // Normalize model size
-          const boundingBox = new THREE.Box3().setFromObject(model);
-          const size = boundingBox.getSize(new THREE.Vector3());
-          const scaleFactor = 1.5 / Math.max(size.x, size.y, size.z);
-          model.scale.set(scaleFactor, scaleFactor, scaleFactor);
-
-          scene.add(model);
-          glassesModelRef.current = model;
-        },
-        undefined,
-        (error) => console.error("Error loading 3D model:", error)
-      );
-    };
-
-    loadModel(selectedModel);
+    loader.load(
+      modelUrl,
+      (gltf) => {
+        const model = gltf.scene;
+        // Normalize model size
+        const boundingBox = new THREE.Box3().setFromObject(model);
+        const size = boundingBox.getSize(new THREE.Vector3());
+        const scaleFactor = 0.05 / Math.max(size.x, size.y, size.z);
+        model.scale.set(scaleFactor, scaleFactor, scaleFactor);
+        scene.add(model);
+        glassesModelRef.current = model;
+      },
+      undefined,
+      (error) => console.error("Error loading 3D model:", error)
+    );
 
     const animate = () => {
       requestAnimationFrame(animate);
-      if (glassesModelRef.current) glassesModelRef.current.rotation.y += 0.01; // Optional rotation
+      if (glassesModelRef.current) glassesModelRef.current.rotation.y += 0.01;
       renderer.render(scene, camera3D);
     };
     animate();
-
-    return () => {
-      renderer.setAnimationLoop(null);
-    };
   }, [selectedModel]);
 
+  // Initialize Mediapipe FaceMesh
   useEffect(() => {
-    if (videoRef.current && canvasRef.current) {
-      const faceMesh = new FaceMesh({
-        locateFile: (file) =>
-          `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`,
-      });
+    const initializeCamera = async () => {
+      if (videoRef.current && canvasRef.current) {
+        const faceMesh = new FaceMesh({
+          locateFile: (file) =>
+            `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`,
+        });
 
-      faceMesh.setOptions({
-        maxNumFaces: 1,
-        refineLandmarks: true,
-        minDetectionConfidence: 0.5,
-        minTrackingConfidence: 0.5,
-      });
+        faceMesh.setOptions({
+          maxNumFaces: 1,
+          refineLandmarks: true,
+          minDetectionConfidence: 0.5,
+          minTrackingConfidence: 0.5,
+        });
 
-      faceMesh.onResults((results) => {
-        if (!glassesModelRef.current) return;
+        faceMesh.onResults((results) => {
+          if (!glassesModelRef.current) return;
 
-        if (results.multiFaceLandmarks) {
-          const landmarks = results.multiFaceLandmarks[0];
+          if (results.multiFaceLandmarks) {
+            const landmarks = results.multiFaceLandmarks[0];
 
-          const noseBridge = landmarks[6];
-          const leftEye = landmarks[33];
-          const rightEye = landmarks[263];
+            const noseBridge = landmarks[6];
+            const leftEye = landmarks[33];
+            const rightEye = landmarks[263];
 
-          if (noseBridge && leftEye && rightEye) {
-            // Position
-            const positionX = (noseBridge.x - 0.5) * 10;
-            const positionY = -(noseBridge.y - 0.5) * 10;
-            glassesModelRef.current.position.set(positionX, positionY, 0);
+            if (noseBridge && leftEye && rightEye) {
+              const positionX = (noseBridge.x - 0.5) * 10;
+              const positionY = -(noseBridge.y - 0.5) * 10;
+              glassesModelRef.current.position.set(positionX, positionY, 0);
 
-            // Scale
-            const eyeDistance = Math.sqrt(
-              Math.pow(rightEye.x - leftEye.x, 2) +
-              Math.pow(rightEye.y - leftEye.y, 2)
-            );
-            glassesModelRef.current.scale.set(
-              eyeDistance * 10,
-              eyeDistance * 10,
-              eyeDistance * 10
-            );
+              const eyeDistance = Math.sqrt(
+                Math.pow(rightEye.x - leftEye.x, 2) +
+                  Math.pow(rightEye.y - leftEye.y, 2)
+              );
+              glassesModelRef.current.scale.set(
+                eyeDistance * 10,
+                eyeDistance * 10,
+                eyeDistance * 10
+              );
 
-            // Rotation
-            const angle = Math.atan2(
-              rightEye.y - leftEye.y,
-              rightEye.x - leftEye.x
-            );
-            glassesModelRef.current.rotation.set(0, 0, angle);
+              const angle = Math.atan2(
+                rightEye.y - leftEye.y,
+                rightEye.x - leftEye.x
+              );
+              glassesModelRef.current.rotation.set(0, 0, angle);
+            }
           }
-        }
-      });
+        });
 
-      const camera = new Camera(videoRef.current, {
-        onFrame: async () => {
-          await faceMesh.send({ image: videoRef.current });
-        },
-        width: 800,
-        height: 600,
-      });
+        const camera = new Camera(videoRef.current, {
+          onFrame: async () => {
+            await faceMesh.send({ image: videoRef.current });
+          },
+          width: 800,
+          height: 600,
+        });
 
-      camera.start();
-    }
+        camera.start();
+      }
+    };
+
+    initializeCamera();
   }, []);
 
   return (
@@ -191,7 +178,6 @@ const CameraPage = () => {
         Face Mesh with 3D Glasses
       </h1>
 
-      {/* Dropdown for Selecting Models */}
       <div style={{ marginBottom: "20px" }}>
         <label
           htmlFor="modelSelect"
@@ -223,7 +209,6 @@ const CameraPage = () => {
         </select>
       </div>
 
-      {/* Camera and 3D Model Overlay */}
       <div
         style={{
           display: "flex",
@@ -233,7 +218,6 @@ const CameraPage = () => {
           gap: "20px",
         }}
       >
-        {/* Camera Feed */}
         <div
           style={{
             width: "800px",
