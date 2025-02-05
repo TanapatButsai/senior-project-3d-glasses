@@ -19,6 +19,10 @@ const WelcomePage = () => {
     navigate("/model-upload");
   };
 
+  const handleManagementPageClick = () => {
+    navigate("/model-management");
+  };
+
   return (
     <div
       style={{
@@ -48,6 +52,7 @@ const WelcomePage = () => {
         <Button label="Open Camera" onClick={handleCameraClick} />
         <Button label="Model Viewer" onClick={handleModelViewerClick} />
         <Button label="Model Upload" onClick={handleModelUploadClick} />
+        <Button label="Model Management" onClick={handleManagementPageClick} />
       </div>
 
       <Footer />

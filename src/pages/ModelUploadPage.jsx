@@ -7,6 +7,7 @@ const ModelUploadPage = () => {
   const [modelType, setModelType] = useState("");
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
+  const [showModal, setShowModal] = useState(false);
 
   const handleNameChange = (e) => setModelName(e.target.value);
   const handleTypeChange = (e) => setModelType(e.target.value);
@@ -17,6 +18,7 @@ const ModelUploadPage = () => {
 
     if (!modelName || !modelType || !file) {
       setMessage("All fields are required: Model name, type, and file.");
+      setShowModal(true);
       return;
     }
 
@@ -43,11 +45,13 @@ const ModelUploadPage = () => {
     } catch (error) {
       console.error("Error uploading model:", error);
       setMessage("An error occurred while uploading the model.");
+    } finally {
+      setShowModal(true); // Show the modal with the result
     }
   };
 
   return (
-    <div 
+    <div
       style={{
         display: "flex",
         flexDirection: "column",
@@ -58,15 +62,21 @@ const ModelUploadPage = () => {
         backgroundColor: "#326a72",
         padding: "20px",
         boxSizing: "border-box",
-      }}>
-      
-      {/* ✅ Header now takes only necessary space */}
+      }}
+    >
       <Header title="Upload 3D Glasses Model" />
 
-      {/* ✅ Add `flex-grow` to push content below the header */}
-      <div style={{ flexGrow: 1, display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>
-        <form 
-          onSubmit={handleSubmit} 
+      <div
+        style={{
+          flexGrow: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: "100%",
+        }}
+      >
+        <form
+          onSubmit={handleSubmit}
           style={{
             display: "flex",
             flexDirection: "column",
@@ -75,39 +85,131 @@ const ModelUploadPage = () => {
             padding: "20px",
             backgroundColor: "#ffffff",
             borderRadius: "8px",
-            boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.3)"
-          }}>
-          
-          <label htmlFor="modelName" style={{ color: "#000", marginBottom: "5px", fontWeight: "bold" }}>Model Name:</label>
-          <input type="text" id="modelName" value={modelName} onChange={handleNameChange} placeholder="Enter Model Name" 
-            style={{ width: "100%", padding: "10px", marginBottom: "10px", borderRadius: "5px", border: "1px solid #ccc" }} />
+            boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.3)",
+          }}
+        >
+          <label
+            htmlFor="modelName"
+            style={{ color: "#000", marginBottom: "5px", fontWeight: "bold" }}
+          >
+            Model Name:
+          </label>
+          <input
+            type="text"
+            id="modelName"
+            value={modelName}
+            onChange={handleNameChange}
+            placeholder="Enter Model Name"
+            style={{
+              width: "100%",
+              padding: "10px",
+              marginBottom: "10px",
+              borderRadius: "5px",
+              border: "1px solid #ccc",
+            }}
+          />
 
-          <label htmlFor="modelType" style={{ color: "#000", marginBottom: "5px", fontWeight: "bold" }}>Model Type:</label>
-          <select id="modelType" value={modelType} onChange={handleTypeChange} 
-            style={{ width: "100%", padding: "10px", marginBottom: "10px", borderRadius: "5px", border: "1px solid #ccc" }}>
+          <label
+            htmlFor="modelType"
+            style={{ color: "#000", marginBottom: "5px", fontWeight: "bold" }}
+          >
+            Model Type:
+          </label>
+          <select
+            id="modelType"
+            value={modelType}
+            onChange={handleTypeChange}
+            style={{
+              width: "100%",
+              padding: "10px",
+              marginBottom: "10px",
+              borderRadius: "5px",
+              border: "1px solid #ccc",
+            }}
+          >
             <option value="">Select Type</option>
             <option value="Sunglasses">Sunglasses</option>
-            <option value="Prescription Glasses">Prescription Glasses</option>
+            <option value="Prescription Glasses">
+              Prescription Glasses
+            </option>
           </select>
 
-          <label htmlFor="fileUpload" style={{ color: "#000", marginBottom: "5px", fontWeight: "bold" }}>Choose File:</label>
-          <input type="file" id="fileUpload" onChange={handleFileChange} accept=".glb" 
-            style={{ marginBottom: "10px", padding: "10px", width: "100%" }} />
+          <label
+            htmlFor="fileUpload"
+            style={{ color: "#000", marginBottom: "5px", fontWeight: "bold" }}
+          >
+            Choose File:
+          </label>
+          <input
+            type="file"
+            id="fileUpload"
+            onChange={handleFileChange}
+            accept=".glb"
+            style={{ marginBottom: "10px", padding: "10px", width: "100%" }}
+          />
 
-          <button type="submit" 
-            style={{ 
-              backgroundColor: "#1DB954", color: "#fff", padding: "10px 20px", 
-              border: "none", borderRadius: "5px", fontSize: "16px", cursor: "pointer" 
-            }}>
+          <button
+            type="submit"
+            style={{
+              backgroundColor: "#1DB954",
+              color: "#fff",
+              padding: "10px 20px",
+              border: "none",
+              borderRadius: "5px",
+              fontSize: "16px",
+              cursor: "pointer",
+            }}
+          >
             Upload
           </button>
         </form>
       </div>
 
-      {/* ✅ Message Below the Form */}
-      {message && <p style={{ marginTop: "10px", color: "#fff", fontWeight: "bold" }}>{message}</p>}
+      {showModal && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              width: "400px",
+              backgroundColor: "#fff",
+              padding: "20px",
+              borderRadius: "8px",
+              textAlign: "center",
+              boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)",
+            }}
+          >
+            <h2 style={{ color: "#333" }}>Status</h2>
+            <p style={{ margin: "20px 0", color: "#555" }}>{message}</p>
+            <button
+              onClick={() => setShowModal(false)}
+              style={{
+                backgroundColor: "#1DB954",
+                color: "#fff",
+                padding: "10px 20px",
+                border: "none",
+                borderRadius: "5px",
+                fontSize: "16px",
+                cursor: "pointer",
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
 
-      {/* ✅ Footer always at the bottom */}
       <Footer />
     </div>
   );
