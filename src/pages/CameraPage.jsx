@@ -1,8 +1,9 @@
 import React, { useRef, useEffect, useState } from "react";
-import { Camera } from "@mediapipe/camera_utils";
+import { Canvas } from "@react-three/fiber";
 import { FaceMesh } from "@mediapipe/face_mesh";
-import * as THREE from "three";
+import { Camera } from "@mediapipe/camera_utils";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+import * as THREE from "three";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 
@@ -12,87 +13,65 @@ const CameraPage = () => {
   const sceneRef = useRef(null);
   const rendererRef = useRef(null);
   const camera3DRef = useRef(null);
-  const glassesModelRef = useRef(null);
-  const [models, setModels] = useState([]);
-  const [selectedModel, setSelectedModel] = useState("");
+  const glassesRef = useRef(null);
+  const [cameraError, setCameraError] = useState(null);
 
-  // Fetch models from backend
-  useEffect(() => {
-    const fetchModels = async () => {
-      try {
-        const response = await fetch("http://localhost:5050/models");
-        const data = await response.json();
-        setModels(data);
-        if (data.length > 0) setSelectedModel(data[0].model_file);
-      } catch (error) {
-        console.error("Error fetching models:", error);
-      }
-    };
-
-    fetchModels();
-  }, []);
-
-  // Initialize 3D scene and load model
-  useEffect(() => {
-    if (!canvasRef.current || !selectedModel) return;
-
-    let scene = sceneRef.current;
-    let renderer = rendererRef.current;
-    let camera3D = camera3DRef.current;
-
-    if (!scene) {
-      scene = new THREE.Scene();
-      sceneRef.current = scene;
-
-      camera3D = new THREE.PerspectiveCamera(75, 800 / 600, 0.1, 1000);
-      camera3D.position.set(0, 0, 5);
-      camera3DRef.current = camera3D;
-
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-      renderer.setSize(800, 600);
-      renderer.setClearColor(0x000000, 0);
-      canvasRef.current.appendChild(renderer.domElement);
-      rendererRef.current = renderer;
-
-      const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
-      scene.add(ambientLight);
-
-      const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-      directionalLight.position.set(5, 10, 7.5).normalize();
-      scene.add(directionalLight);
-    }
-
+  const loadGlassesModel = (scene) => {
     const loader = new GLTFLoader();
-    const modelUrl = `http://localhost:5050/models/${encodeURIComponent(selectedModel)}`;
-
     loader.load(
-      modelUrl,
+      "/public/models/cartoon_glasses.glb", // Replace with your actual .glb file path
       (gltf) => {
-        const model = gltf.scene;
-        // Normalize model size
-        const boundingBox = new THREE.Box3().setFromObject(model);
-        const size = boundingBox.getSize(new THREE.Vector3());
-        const scaleFactor = 0.05 / Math.max(size.x, size.y, size.z);
-        model.scale.set(scaleFactor, scaleFactor, scaleFactor);
-        scene.add(model);
-        glassesModelRef.current = model;
+        const glasses = gltf.scene;
+        glasses.scale.set(0.05, 0.05, 0.05); // Adjust scale
+        scene.add(glasses);
+        glassesRef.current = glasses;
       },
       undefined,
-      (error) => console.error("Error loading 3D model:", error)
+      (error) => {
+        console.error("Failed to load model:", error);
+      }
     );
+  };
+
+  useEffect(() => {
+    // Initialize 3D Scene
+    const scene = new THREE.Scene();
+    const camera3D = new THREE.PerspectiveCamera(75, 800 / 600, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+
+    camera3D.position.set(0, 0, 5);
+    renderer.setSize(800, 600);
+    renderer.setClearColor(0x000000, 0); // Transparent background
+    canvasRef.current.appendChild(renderer.domElement);
+
+    sceneRef.current = scene;
+    camera3DRef.current = camera3D;
+    rendererRef.current = renderer;
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
+    scene.add(ambientLight);
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(5, 10, 7.5).normalize();
+    scene.add(directionalLight);
+
+    // Load Glasses Model
+    loadGlassesModel(scene);
 
     const animate = () => {
       requestAnimationFrame(animate);
-      if (glassesModelRef.current) glassesModelRef.current.rotation.y += 0.01;
       renderer.render(scene, camera3D);
     };
     animate();
-  }, [selectedModel]);
+  }, []);
 
-  // Initialize Mediapipe FaceMesh
   useEffect(() => {
-    const initializeCamera = async () => {
-      if (videoRef.current && canvasRef.current) {
+    // Setup Camera and FaceMesh
+    const checkCameraAccess = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        videoRef.current.srcObject = stream;
+
         const faceMesh = new FaceMesh({
           locateFile: (file) =>
             `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`,
@@ -106,36 +85,15 @@ const CameraPage = () => {
         });
 
         faceMesh.onResults((results) => {
-          if (!glassesModelRef.current) return;
-
-          if (results.multiFaceLandmarks) {
+          if (results.multiFaceLandmarks && glassesRef.current) {
             const landmarks = results.multiFaceLandmarks[0];
+            const noseBridge = landmarks[6]; // Example landmark for positioning glasses
 
-            const noseBridge = landmarks[6];
-            const leftEye = landmarks[33];
-            const rightEye = landmarks[263];
-
-            if (noseBridge && leftEye && rightEye) {
-              const positionX = (noseBridge.x - 0.5) * 10;
-              const positionY = -(noseBridge.y - 0.5) * 10;
-              glassesModelRef.current.position.set(positionX, positionY, 0);
-
-              const eyeDistance = Math.sqrt(
-                Math.pow(rightEye.x - leftEye.x, 2) +
-                  Math.pow(rightEye.y - leftEye.y, 2)
-              );
-              glassesModelRef.current.scale.set(
-                eyeDistance * 10,
-                eyeDistance * 10,
-                eyeDistance * 10
-              );
-
-              const angle = Math.atan2(
-                rightEye.y - leftEye.y,
-                rightEye.x - leftEye.x
-              );
-              glassesModelRef.current.rotation.set(0, 0, angle);
-            }
+            // Map landmarks to 3D coordinates
+            const x = (noseBridge.x - 0.5) * 10; // Adjust scaling as needed
+            const y = -(noseBridge.y - 0.5) * 10;
+            const z = -5; // Fixed depth for now
+            glassesRef.current.position.set(x, y, z);
           }
         });
 
@@ -148,10 +106,13 @@ const CameraPage = () => {
         });
 
         camera.start();
+      } catch (error) {
+        console.error("Camera access error:", error);
+        setCameraError("Camera not accessible. Please check permissions.");
       }
     };
 
-    initializeCamera();
+    checkCameraAccess();
   }, []);
 
   return (
@@ -166,91 +127,37 @@ const CameraPage = () => {
         backgroundColor: "#326a72",
       }}
     >
-      <Header title="3D Glasses Try-on App" />
-      <h1
-        style={{
-          color: "#fff",
-          fontSize: "24px",
-          fontWeight: "bold",
-          marginBottom: "20px",
-        }}
-      >
-        Face Mesh with 3D Glasses
+      <Header title="AR Face Filter with .glb Models" />
+      <h1 style={{ color: "#fff", fontSize: "24px", fontWeight: "bold" }}>
+        3D AR Face Filter
       </h1>
 
-      <div style={{ marginBottom: "20px" }}>
-        <label
-          htmlFor="modelSelect"
-          style={{
-            color: "#fff",
-            fontSize: "18px",
-            marginRight: "10px",
-            fontWeight: "bold",
-          }}
-        >
-          Select Glasses Model:
-        </label>
-        <select
-          id="modelSelect"
-          value={selectedModel}
-          onChange={(e) => setSelectedModel(e.target.value)}
-          style={{
-            padding: "8px",
-            fontSize: "16px",
-            borderRadius: "4px",
-            border: "1px solid #ccc",
-          }}
-        >
-          {models.map((model) => (
-            <option key={model.glasses_id} value={model.model_file}>
-              {model.name}
-            </option>
-          ))}
-        </select>
-      </div>
+      {cameraError && (
+        <p style={{ color: "red", fontWeight: "bold" }}>{cameraError}</p>
+      )}
 
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "20px",
-        }}
-      >
-        <div
+      {/* Video and Canvas */}
+      <div style={{ position: "relative", width: "800px", height: "600px" }}>
+        <video
+          ref={videoRef}
           style={{
-            width: "800px",
-            height: "600px",
-            border: "10px solid black",
-            borderRadius: "8px",
-            overflow: "hidden",
-            position: "relative",
-            backgroundColor: "#000",
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            position: "absolute",
+            zIndex: 1,
           }}
-        >
-          <video
-            ref={videoRef}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-            }}
-            playsInline
-          ></video>
-          <canvas
-            ref={canvasRef}
-            width="800"
-            height="600"
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: "100%",
-              height: "100%",
-            }}
-          ></canvas>
-        </div>
+          playsInline
+        ></video>
+        <div
+          ref={canvasRef}
+          style={{
+            width: "100%",
+            height: "100%",
+            position: "absolute",
+            zIndex: 2,
+          }}
+        ></div>
       </div>
 
       <Footer />
