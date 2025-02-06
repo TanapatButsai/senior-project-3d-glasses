@@ -1,5 +1,4 @@
 import React, { useRef, useEffect, useState } from "react";
-import { Canvas } from "@react-three/fiber";
 import { FaceMesh } from "@mediapipe/face_mesh";
 import { Camera } from "@mediapipe/camera_utils";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
@@ -15,16 +14,20 @@ const CameraPage = () => {
   const camera3DRef = useRef(null);
   const glassesRef = useRef(null);
   const [cameraError, setCameraError] = useState(null);
+  const [faceDetected, setFaceDetected] = useState(false);
+
+  let noFaceFrames = 0; // Count frames without a face
+  const NO_FACE_THRESHOLD = 5; // Number of frames before hiding glasses
 
   const loadGlassesModel = (scene) => {
     const loader = new GLTFLoader();
     loader.load(
-      "/public/models/cartoon_glasses.glb", // Replace with your actual .glb file path
+      "/public/models/cartoon_glasses.glb", // Replace with actual model path
       (gltf) => {
         const glasses = gltf.scene;
-        glasses.scale.set(0.05, 0.05, 0.05); // Adjust scale
-        scene.add(glasses);
         glassesRef.current = glasses;
+        scene.add(glasses);
+        glasses.visible = false; // Hide initially
       },
       undefined,
       (error) => {
@@ -34,14 +37,13 @@ const CameraPage = () => {
   };
 
   useEffect(() => {
-    // Initialize 3D Scene
     const scene = new THREE.Scene();
     const camera3D = new THREE.PerspectiveCamera(75, 800 / 600, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 
     camera3D.position.set(0, 0, 5);
     renderer.setSize(800, 600);
-    renderer.setClearColor(0x000000, 0); // Transparent background
+    renderer.setClearColor(0x000000, 0);
     canvasRef.current.appendChild(renderer.domElement);
 
     sceneRef.current = scene;
@@ -55,7 +57,6 @@ const CameraPage = () => {
     directionalLight.position.set(5, 10, 7.5).normalize();
     scene.add(directionalLight);
 
-    // Load Glasses Model
     loadGlassesModel(scene);
 
     const animate = () => {
@@ -66,7 +67,6 @@ const CameraPage = () => {
   }, []);
 
   useEffect(() => {
-    // Setup Camera and FaceMesh
     const checkCameraAccess = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -80,21 +80,52 @@ const CameraPage = () => {
         faceMesh.setOptions({
           maxNumFaces: 1,
           refineLandmarks: true,
-          minDetectionConfidence: 0.5,
-          minTrackingConfidence: 0.5,
+          minDetectionConfidence: 0.8, // Higher confidence threshold
+          minTrackingConfidence: 0.8,
         });
 
         faceMesh.onResults((results) => {
-          if (results.multiFaceLandmarks && glassesRef.current) {
-            const landmarks = results.multiFaceLandmarks[0];
-            const noseBridge = landmarks[6]; // Example landmark for positioning glasses
+          if (!results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0) {
+            noFaceFrames += 1;
 
-            // Map landmarks to 3D coordinates
-            const x = (noseBridge.x - 0.5) * 10; // Adjust scaling as needed
-            const y = -(noseBridge.y - 0.5) * 10;
-            const z = -5; // Fixed depth for now
-            glassesRef.current.position.set(x, y, z);
+            if (noFaceFrames >= NO_FACE_THRESHOLD) {
+              glassesRef.current.visible = false; // Hide glasses
+              setFaceDetected(false);
+            }
+            return;
           }
+
+          // Reset frame counter when a face is detected
+          noFaceFrames = 0;
+          setFaceDetected(true);
+          glassesRef.current.visible = true;
+
+          const landmarks = results.multiFaceLandmarks[0];
+
+          // Calculate position and scaling
+          const leftEye = landmarks[33];
+          const rightEye = landmarks[263];
+          const leftEar = landmarks[234];
+          const rightEar = landmarks[454];
+
+          const midX = (leftEye.x + rightEye.x) / 2;
+          const midY = (leftEye.y + rightEye.y) / 2;
+
+          const faceWidth = Math.sqrt(
+            Math.pow(rightEar.x - leftEar.x, 2) +
+            Math.pow(rightEar.y - leftEar.y, 2) +
+            Math.pow(rightEar.z - leftEar.z, 2)
+          );
+
+          const scale = Math.max(0.5, Math.min(faceWidth * 10, 3.0));
+
+          glassesRef.current.scale.set(scale, scale, scale);
+
+          const positionZ = -faceWidth * 2.2;
+          const positionX = (midX - 0.5) * 10;
+          const positionY = -(midY - 0.5) * 10;
+
+          glassesRef.current.position.set(positionX, positionY, positionZ);
         });
 
         const camera = new Camera(videoRef.current, {
@@ -127,14 +158,19 @@ const CameraPage = () => {
         backgroundColor: "#326a72",
       }}
     >
-      <Header title="AR Face Filter with .glb Models" />
+      <Header title="AR Face Filter with Perfect Glasses Resizing" />
       <h1 style={{ color: "#fff", fontSize: "24px", fontWeight: "bold" }}>
-        3D AR Face Filter
+        3D AR Face Filter (Auto-Sizing)
       </h1>
 
       {cameraError && (
         <p style={{ color: "red", fontWeight: "bold" }}>{cameraError}</p>
       )}
+
+      {/* Face Detection Status */}
+      <p style={{ color: faceDetected ? "green" : "red", fontWeight: "bold" }}>
+        {faceDetected ? "Face Detected ✅" : "No Face Detected ❌ (Glasses Hidden)"}
+      </p>
 
       {/* Video and Canvas */}
       <div style={{ position: "relative", width: "800px", height: "600px" }}>
@@ -166,3 +202,4 @@ const CameraPage = () => {
 };
 
 export default CameraPage;
+
