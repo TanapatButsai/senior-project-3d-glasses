@@ -16,8 +16,12 @@ const CameraPage = () => {
   const [cameraError, setCameraError] = useState(null);
   const [faceDetected, setFaceDetected] = useState(false);
 
-  let noFaceFrames = 0; // Count frames without a face
+  let noFaceFrames = 0;
   const NO_FACE_THRESHOLD = 5; // Number of frames before hiding glasses
+  const BASE_SCALE_MULTIPLIER = 5; // Base multiplier for scaling glasses
+  const MIN_SCALE = 0.5; // Minimum scale for glasses
+  const MAX_SCALE = 3.0; // Maximum scale for glasses
+  const SMOOTH_FACTOR = 0.2; // Smooth interpolation factor (0.0 - 1.0)
 
   const loadGlassesModel = (scene) => {
     const loader = new GLTFLoader();
@@ -80,7 +84,7 @@ const CameraPage = () => {
         faceMesh.setOptions({
           maxNumFaces: 1,
           refineLandmarks: true,
-          minDetectionConfidence: 0.8, // Higher confidence threshold
+          minDetectionConfidence: 0.8,
           minTrackingConfidence: 0.8,
         });
 
@@ -102,30 +106,45 @@ const CameraPage = () => {
 
           const landmarks = results.multiFaceLandmarks[0];
 
-          // Calculate position and scaling
+          // **Key Landmarks**
           const leftEye = landmarks[33];
           const rightEye = landmarks[263];
+          const noseBridge = landmarks[6];
           const leftEar = landmarks[234];
           const rightEar = landmarks[454];
 
+          // **Calculate position and scaling**
           const midX = (leftEye.x + rightEye.x) / 2;
           const midY = (leftEye.y + rightEye.y) / 2;
 
+          // **Face width (ear-to-ear distance) for scaling**
           const faceWidth = Math.sqrt(
             Math.pow(rightEar.x - leftEar.x, 2) +
             Math.pow(rightEar.y - leftEar.y, 2) +
             Math.pow(rightEar.z - leftEar.z, 2)
           );
 
-          const scale = Math.max(0.5, Math.min(faceWidth * 10, 3.0));
+          // Dynamically scale the glasses based on face distance
+          let scale = faceWidth * BASE_SCALE_MULTIPLIER;
+          scale = Math.max(MIN_SCALE, Math.min(scale, MAX_SCALE));
 
-          glassesRef.current.scale.set(scale, scale, scale);
+          // **Smoothly update scaling**
+          const currentScale = glassesRef.current.scale.x;
+          const newScale = THREE.MathUtils.lerp(currentScale, scale, SMOOTH_FACTOR);
+          glassesRef.current.scale.set(newScale, newScale, newScale);
 
+          // **Depth (Z position) for natural placement**
           const positionZ = -faceWidth * 2.2;
-          const positionX = (midX - 0.5) * 10;
-          const positionY = -(midY - 0.5) * 10;
 
-          glassesRef.current.position.set(positionX, positionY, positionZ);
+          // **Smoothly update position**
+          const currentPosition = glassesRef.current.position;
+          const targetPosition = {
+            x: THREE.MathUtils.lerp(currentPosition.x, (midX - 0.5) * 10, SMOOTH_FACTOR),
+            y: THREE.MathUtils.lerp(currentPosition.y, -(midY - 0.5) * 10, SMOOTH_FACTOR),
+            z: THREE.MathUtils.lerp(currentPosition.z, positionZ, SMOOTH_FACTOR),
+          };
+
+          glassesRef.current.position.set(targetPosition.x, targetPosition.y, targetPosition.z);
         });
 
         const camera = new Camera(videoRef.current, {
@@ -158,9 +177,9 @@ const CameraPage = () => {
         backgroundColor: "#326a72",
       }}
     >
-      <Header title="AR Face Filter with Perfect Glasses Resizing" />
+      <Header title="TRY-ME" />
       <h1 style={{ color: "#fff", fontSize: "24px", fontWeight: "bold" }}>
-        3D AR Face Filter (Auto-Sizing)
+        test
       </h1>
 
       {cameraError && (
@@ -183,8 +202,7 @@ const CameraPage = () => {
             position: "absolute",
             zIndex: 1,
           }}
-          playsInline
-        ></video>
+          playsInline></video>
         <div
           ref={canvasRef}
           style={{
@@ -192,8 +210,7 @@ const CameraPage = () => {
             height: "100%",
             position: "absolute",
             zIndex: 2,
-          }}
-        ></div>
+          }}></div>
       </div>
 
       <Footer />
@@ -202,4 +219,3 @@ const CameraPage = () => {
 };
 
 export default CameraPage;
-
