@@ -28,7 +28,9 @@ const pool = new Pool({
   user: process.env.POSTGRES_USER || "postgres",
   host: process.env.POSTGRES_HOST || "localhost",
   database: process.env.POSTGRES_DB || "glasses_try_on",
-  password: process.env.POSTGRES_PASSWORD || "postgresql",
+//   password: process.env.POSTGRES_PASSWORD || "postgresql",
+  password: process.env.POSTGRES_PASSWORD || "yourpassword",
+
   port: process.env.POSTGRES_PORT || 5432,
 });
 
