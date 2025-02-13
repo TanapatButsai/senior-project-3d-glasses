@@ -18,6 +18,7 @@
     "@mediapipe/pose": "^0.5.1675469404",
     "@react-three/drei": "^9.121.4",
     "@react-three/fiber": "^8.17.14",
+    "axios": "^1.7.9",
     "express": "^4.21.2",
     "multer": "^1.4.5-lts.1",
     "pg": "^8.13.1",

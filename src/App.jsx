@@ -5,13 +5,15 @@ import CameraPage from './pages/CameraPage';
 import ModelViewerPage from "./pages/ModelViewerPage";
 import ModelUploadPage from './pages/ModelUploadPage';
 import ManagementPage from './pages/ManagementPage';
+import AuthorizationPage from './pages/AuthorizationPage';
 
 
 const App = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<WelcomePage />} />
+        <Route path="/" element={<AuthorizationPage />} />
+        <Route path="/welcome" element={<WelcomePage />} />
         <Route path="/camera" element={<CameraPage />} />
         <Route path="/model-viewer" element={<ModelViewerPage />} />
         <Route path="/model-upload" element={<ModelUploadPage />} />
