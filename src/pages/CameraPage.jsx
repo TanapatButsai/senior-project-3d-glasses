@@ -1,77 +1,27 @@
 import React, { useRef, useEffect, useState } from "react";
 import { FaceMesh } from "@mediapipe/face_mesh";
 import { Camera } from "@mediapipe/camera_utils";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
-import * as THREE from "three";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 
 const CameraPage = () => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
-  const sceneRef = useRef(null);
-  const rendererRef = useRef(null);
-  const camera3DRef = useRef(null);
-  const glassesRef = useRef(null);
   const [cameraError, setCameraError] = useState(null);
   const [faceDetected, setFaceDetected] = useState(false);
-
-  let noFaceFrames = 0;
-  const NO_FACE_THRESHOLD = 5; // Number of frames before hiding glasses
-  const BASE_SCALE_MULTIPLIER = 5; // Base multiplier for scaling glasses
-  const MIN_SCALE = 0.5; // Minimum scale for glasses
-  const MAX_SCALE = 3.0; // Maximum scale for glasses
-  const SMOOTH_FACTOR = 0.2; // Smooth interpolation factor (0.0 - 1.0)
-
-  const loadGlassesModel = (scene) => {
-    const loader = new GLTFLoader();
-    loader.load(
-      "/public/models/cartoon_glasses.glb", // Replace with actual model path
-      (gltf) => {
-        const glasses = gltf.scene;
-        glassesRef.current = glasses;
-        scene.add(glasses);
-        glasses.visible = false; // Hide initially
-      },
-      undefined,
-      (error) => {
-        console.error("Failed to load model:", error);
-      }
-    );
-  };
+  const [headPose, setHeadPose] = useState({ pitch: 0, yaw: 0, roll: 0 });
 
   useEffect(() => {
-    const scene = new THREE.Scene();
-    const camera3D = new THREE.PerspectiveCamera(75, 800 / 600, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-
-    camera3D.position.set(0, 0, 5);
-    renderer.setSize(800, 600);
-    renderer.setClearColor(0x000000, 0);
-    canvasRef.current.appendChild(renderer.domElement);
-
-    sceneRef.current = scene;
-    camera3DRef.current = camera3D;
-    rendererRef.current = renderer;
-
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
-    scene.add(ambientLight);
-
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-    directionalLight.position.set(5, 10, 7.5).normalize();
-    scene.add(directionalLight);
-
-    loadGlassesModel(scene);
-
-    const animate = () => {
-      requestAnimationFrame(animate);
-      renderer.render(scene, camera3D);
-    };
-    animate();
+    const checkOpenCV = setInterval(() => {
+      if (window.cv && window.cv.imread) {
+        console.log("✅ OpenCV.js is ready to use!");
+        clearInterval(checkOpenCV);
+      }
+    }, 500);
   }, []);
 
   useEffect(() => {
-    const checkCameraAccess = async () => {
+    const initializeCamera = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         videoRef.current.srcObject = stream;
@@ -90,61 +40,15 @@ const CameraPage = () => {
 
         faceMesh.onResults((results) => {
           if (!results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0) {
-            noFaceFrames += 1;
-
-            if (noFaceFrames >= NO_FACE_THRESHOLD) {
-              glassesRef.current.visible = false; // Hide glasses
-              setFaceDetected(false);
-            }
+            setFaceDetected(false);
             return;
           }
 
-          // Reset frame counter when a face is detected
-          noFaceFrames = 0;
           setFaceDetected(true);
-          glassesRef.current.visible = true;
-
           const landmarks = results.multiFaceLandmarks[0];
 
-          // **Key Landmarks**
-          const leftEye = landmarks[33];
-          const rightEye = landmarks[263];
-          const noseBridge = landmarks[6];
-          const leftEar = landmarks[234];
-          const rightEar = landmarks[454];
-
-          // **Calculate position and scaling**
-          const midX = (leftEye.x + rightEye.x) / 2;
-          const midY = (leftEye.y + rightEye.y) / 2;
-
-          // **Face width (ear-to-ear distance) for scaling**
-          const faceWidth = Math.sqrt(
-            Math.pow(rightEar.x - leftEar.x, 2) +
-            Math.pow(rightEar.y - leftEar.y, 2) +
-            Math.pow(rightEar.z - leftEar.z, 2)
-          );
-
-          // Dynamically scale the glasses based on face distance
-          let scale = faceWidth * BASE_SCALE_MULTIPLIER;
-          scale = Math.max(MIN_SCALE, Math.min(scale, MAX_SCALE));
-
-          // **Smoothly update scaling**
-          const currentScale = glassesRef.current.scale.x;
-          const newScale = THREE.MathUtils.lerp(currentScale, scale, SMOOTH_FACTOR);
-          glassesRef.current.scale.set(newScale, newScale, newScale);
-
-          // **Depth (Z position) for natural placement**
-          const positionZ = -faceWidth * 2.2;
-
-          // **Smoothly update position**
-          const currentPosition = glassesRef.current.position;
-          const targetPosition = {
-            x: THREE.MathUtils.lerp(currentPosition.x, (midX - 0.5) * 10, SMOOTH_FACTOR),
-            y: THREE.MathUtils.lerp(currentPosition.y, -(midY - 0.5) * 10, SMOOTH_FACTOR),
-            z: THREE.MathUtils.lerp(currentPosition.z, positionZ, SMOOTH_FACTOR),
-          };
-
-          glassesRef.current.position.set(targetPosition.x, targetPosition.y, targetPosition.z);
+          // Perform head pose estimation
+          estimateHeadPose(landmarks);
         });
 
         const camera = new Camera(videoRef.current, {
@@ -162,9 +66,78 @@ const CameraPage = () => {
       }
     };
 
-    checkCameraAccess();
+    initializeCamera();
   }, []);
 
+  const estimateHeadPose = (landmarks) => {
+    if (!window.cv) {
+      console.error("❌ OpenCV.js is not loaded.");
+      return;
+    }
+  
+    const cv = window.cv; // ✅ Use OpenCV.js from the global object
+  
+    // **Camera Matrix**
+    const imageWidth = 800;
+    const imageHeight = 600;
+    const focalLength = imageWidth; // Assume focal length = width
+    const cameraMatrix = cv.Mat.zeros(3, 3, cv.CV_64F);
+    cameraMatrix.data64F.set([
+      focalLength, 0, imageWidth / 2,
+      0, focalLength, imageHeight / 2,
+      0, 0, 1,
+    ]);
+  
+    const distCoeffs = cv.Mat.zeros(4, 1, cv.CV_64F); // No lens distortion
+  
+    // **3D Model Points (Head Reference)**
+    const modelPoints = cv.Mat.zeros(6, 3, cv.CV_64F);
+    modelPoints.data64F.set([
+      0.0, 0.0, 0.0,  // Nose tip
+      -30.0, -30.0, -30.0,  // Left eye
+      30.0, -30.0, -30.0,   // Right eye
+      -60.0, 40.0, -50.0,   // Left ear
+      60.0, 40.0, -50.0,    // Right ear
+      0.0, -70.0, -30.0,    // Chin
+    ]);
+  
+    // **2D Image Points (from FaceMesh)**
+    const imagePoints = cv.Mat.zeros(6, 2, cv.CV_64F);
+    imagePoints.data64F.set([
+      landmarks[1].x * imageWidth, landmarks[1].y * imageHeight,   // Nose tip
+      landmarks[33].x * imageWidth, landmarks[33].y * imageHeight, // Left eye
+      landmarks[263].x * imageWidth, landmarks[263].y * imageHeight, // Right eye
+      landmarks[234].x * imageWidth, landmarks[234].y * imageHeight, // Left ear
+      landmarks[454].x * imageWidth, landmarks[454].y * imageHeight, // Right ear
+      landmarks[152].x * imageWidth, landmarks[152].y * imageHeight, // Chin
+    ]);
+  
+    // Solve PnP
+    let rvec = new cv.Mat();
+    let tvec = new cv.Mat();
+    cv.solvePnP(modelPoints, imagePoints, cameraMatrix, distCoeffs, rvec, tvec);
+  
+    // Convert rotation vector to Euler angles
+    let rmat = new cv.Mat();
+    cv.Rodrigues(rvec, rmat);
+  
+    let rotationMatrix = rmat.data64F;
+    let pitch = Math.atan2(rotationMatrix[7], rotationMatrix[8]) * (180 / Math.PI);
+    let yaw = Math.atan2(-rotationMatrix[6], Math.sqrt(rotationMatrix[7] ** 2 + rotationMatrix[8] ** 2)) * (180 / Math.PI);
+    let roll = Math.atan2(rotationMatrix[3], rotationMatrix[0]) * (180 / Math.PI);
+  
+    setHeadPose({ pitch, yaw, roll });
+  
+    // **Clean up OpenCV Mat objects**
+    rvec.delete();
+    tvec.delete();
+    rmat.delete();
+    modelPoints.delete();
+    imagePoints.delete();
+    cameraMatrix.delete();
+    distCoeffs.delete();
+  };
+  
   return (
     <div
       style={{
@@ -177,40 +150,26 @@ const CameraPage = () => {
         backgroundColor: "#326a72",
       }}
     >
-      <Header title="TRY-ME" />
-      <h1 style={{ color: "#fff", fontSize: "24px", fontWeight: "bold" }}>
-        test
-      </h1>
+      <Header title="Head Pose Estimation" />
+      <h1 style={{ color: "#fff", fontSize: "24px", fontWeight: "bold" }}>Head Pose Detection</h1>
 
-      {cameraError && (
-        <p style={{ color: "red", fontWeight: "bold" }}>{cameraError}</p>
-      )}
+      {cameraError && <p style={{ color: "red", fontWeight: "bold" }}>{cameraError}</p>}
 
       {/* Face Detection Status */}
       <p style={{ color: faceDetected ? "green" : "red", fontWeight: "bold" }}>
-        {faceDetected ? "Face Detected ✅" : "No Face Detected ❌ (Glasses Hidden)"}
+        {faceDetected ? "Face Detected ✅" : "No Face Detected ❌"}
       </p>
 
-      {/* Video and Canvas */}
+      {/* Head Pose Data */}
+      <p style={{ color: "white", fontSize: "18px" }}>
+        <b>Pitch:</b> {headPose.pitch.toFixed(2)}°
+        <b> Yaw:</b> {headPose.yaw.toFixed(2)}°
+        <b> Roll:</b> {headPose.roll.toFixed(2)}°
+      </p>
+
+      {/* Video Feed */}
       <div style={{ position: "relative", width: "800px", height: "600px" }}>
-        <video
-          ref={videoRef}
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            position: "absolute",
-            zIndex: 1,
-          }}
-          playsInline></video>
-        <div
-          ref={canvasRef}
-          style={{
-            width: "100%",
-            height: "100%",
-            position: "absolute",
-            zIndex: 2,
-          }}></div>
+        <video ref={videoRef} style={{ width: "100%", height: "100%", objectFit: "cover" }} playsInline></video>
       </div>
 
       <Footer />

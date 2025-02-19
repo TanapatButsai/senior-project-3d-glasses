@@ -4,7 +4,19 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React</title>
+    <title>3D Glasses Try-On</title>
+
+    <!-- ✅ OpenCV.js CDN -->
+    <script async src="https://docs.opencv.org/4.x/opencv.js" onload="cvReady()" onerror="cvError()"></script>
+
+    <script>
+      function cvReady() {
+        console.log("✅ OpenCV.js is loaded successfully!");
+      }
+      function cvError() {
+        console.error("❌ Failed to load OpenCV.js.");
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
