@@ -26,7 +26,7 @@ const CameraPage = () => {
   const loadGlassesModel = (scene) => {
     const loader = new GLTFLoader();
     loader.load(
-      "/models/cartoon_glasses.glb", // Replace with actual model path
+      "/models/gl.glb", // Replace with actual model path
       (gltf) => {
         const glasses = gltf.scene;
         glassesRef.current = glasses;
