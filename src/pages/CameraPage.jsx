@@ -218,6 +218,7 @@ const CameraPage = () => {
             objectFit: "cover",
             position: "absolute",
             zIndex: 1,
+            transform: "scaleX(-1)", // ✅ กลับด้านซ้าย-ขวา (Mirror)
           }}
           playsInline></video>
         <div
