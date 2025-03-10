@@ -1,0 +1,44 @@
+/* Navigation Bar */
+.nav-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5vh 5vw;
+    background: #fff;
+    width: 100%;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .logo {
+    font-size: 2.5vh;
+    font-weight: bold;
+  }
+  
+  .nav-links {
+    display: flex;
+    list-style: none;
+    gap: 2vw;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .nav-links li {
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 2vh;
+  }
+  
+  /* Login Button */
+  .login-button {
+    cursor: pointer;
+    font-weight: bold;
+    padding: 5px 15px;
+    border-radius: 5px;
+    transition: 0.3s;
+  }
+  
+  .login-button:hover {
+    background-color: #1a73e8;
+    color: white;
+  }
+  

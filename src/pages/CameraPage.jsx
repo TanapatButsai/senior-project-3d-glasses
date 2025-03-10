@@ -147,8 +147,8 @@ const CameraPage = () => {
           // ✅ ปรับตำแหน่งแว่น
           glassesRef.current.position.set(
             THREE.MathUtils.lerp(glassesRef.current.position.x, (noseX - 0.5) * 10, 0.2),
-            THREE.MathUtils.lerp(glassesRef.current.position.y, -(midY - 0.5) * 10, 0.2),
-            -faceWidth * 1.8 // ปรับระยะห่างของแว่นให้ไม่ลอย
+            THREE.MathUtils.lerp(glassesRef.current.position.y, -(midY - 0.5) * 10 + 0.5, 0.2), // 👈 Add a slight offset (0.5) to lift the glasses
+            -faceWidth * 1.8
           );
         
           // ✅ ปรับการหมุนของแว่นให้พอดี
@@ -210,6 +210,14 @@ const CameraPage = () => {
 
       {/* Video and Canvas */}
       <div style={{ position: "relative", width: "800px", height: "600px" }}>
+      <div
+          ref={canvasRef}
+          style={{
+            width: "100%",
+            height: "100%",
+            position: "absolute",
+            zIndex: 1,
+          }}></div>
         <video
           ref={videoRef}
           style={{
@@ -221,17 +229,10 @@ const CameraPage = () => {
             transform: "scaleX(-1)", // ✅ กลับด้านซ้าย-ขวา (Mirror)
           }}
           playsInline></video>
-        <div
-          ref={canvasRef}
-          style={{
-            width: "100%",
-            height: "100%",
-            position: "absolute",
-            zIndex: 2,
-          }}></div>
-      </div>
+        
+        </div>
 
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 };

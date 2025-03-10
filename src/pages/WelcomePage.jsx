@@ -1,64 +1,44 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import Button from "../components/Button";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
+import "./WelcomePage.css";
+import Navbar from "../components/Navbar"; // Import Navbar
 
 const WelcomePage = () => {
   const navigate = useNavigate();
 
-  const handleCameraClick = () => {
-    navigate("/camera");
-  };
-
-  const handleModelViewerClick = () => {
-    navigate("/model-viewer");
-  };
-
-  const handleModelUploadClick = () => {
-    navigate("/model-upload");
-  };
-
-  const handleManagementPageClick = () => {
-    navigate("/model-management");
-  };
-
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        height: "100vh",
-        width: "100vw",
-        backgroundColor: "#326a72", // Updated background color
-        padding: "20px",
-        boxSizing: "border-box",
-      }}
-    >
-      <Header title="3D Glasses Try-on App" />
-      
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "20px", // Adds spacing between buttons
-          marginTop: "20px", // Adds spacing between header and buttons
-        }}
-      >
-        <Button label="Open Camera" onClick={handleCameraClick} />
-        <Button label="Model Viewer" onClick={handleModelViewerClick} />
-        <Button label="Model Upload" onClick={handleModelUploadClick} />
-        <Button label="Model Management" onClick={handleManagementPageClick} />
-      </div>
+    <div className="welcome-container">
+      {/* Navigation Bar */}
+      <Navbar />
+      {/* Main Content */}
+      <div className="main-content">
+        {/* Left Section - Instructions */}
+        <div className="text-content">
+          <h2>Virtual Try On Glasses</h2>
+          <p className="sub-text">
+            You can virtually try on as many pairs as you want with our
+            innovative virtual mirror tool from the comfort of your home or
+            wherever you may be.
+          </p>
 
-      <Footer />
+          <div className="instructions">
+            <p>👓 Select a pair you love from the listing below</p>
+            <p>⬇️ Click “Try them on” and follow the on-screen instructions.</p>
+            <p>📸 See how they look and shop your favorite styles.</p>
+          </div>
+
+          <button onClick={() => navigate("/model-viewer")} className="cta-button">
+            Try On Glasses
+          </button>
+        </div>
+
+        {/* Right Section - Image */}
+        <div className="image-container">
+          <img src="/image/image-welcome.png" alt="Virtual Try-On" />
+        </div>
+      </div>
     </div>
   );
 };
 
 export default WelcomePage;
-

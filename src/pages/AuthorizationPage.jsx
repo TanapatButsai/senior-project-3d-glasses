@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import "./AuthorizationPage.css"; // Import CSS
 
 const AuthorizationPage = () => {
   const navigate = useNavigate();
@@ -20,6 +21,10 @@ const AuthorizationPage = () => {
 
     try {
       const response = await axios.post(url, payload);
+      if (response.data.token) {
+        localStorage.setItem("token", response.data.token);
+      }
+
       setMessage(response.data.message);
       setShowModal(true);
 
@@ -34,138 +39,56 @@ const AuthorizationPage = () => {
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        height: "100vh",
-        width: "100vw",
-        backgroundColor: "#326a72",
-        padding: "20px",
-      }}
-    >
+    <div className="auth-container">
       <Header title={isSignUp ? "Sign Up" : "Sign In"} />
 
-      <div
-        style={{
-          flexGrow: 1,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          width: "100%",
-        }}
-      >
-        <form
-          onSubmit={handleSubmit}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            width: "40%",
-            padding: "20px",
-            backgroundColor: "#ffffff",
-            borderRadius: "8px",
-            boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.3)",
-          }}
-        >
-          <h2 style={{ color: "#000", marginBottom: "20px" }}>
-            {isSignUp ? "Create an Account" : "Sign in to Your Account"}
-          </h2>
+      <div className="auth-form-wrapper">
+        <form onSubmit={handleSubmit} className="auth-form">
+          <h2>{isSignUp ? "Create an Account" : "Sign in to Your Account"}</h2>
 
           {isSignUp && (
-            <>
-              <label
-                htmlFor="name"
-                style={{ color: "#000", marginBottom: "5px", fontWeight: "bold", alignSelf: "flex-start" }}
-              >
-                Full Name:
-              </label>
+            <div className="auth-input-group">
+              <label htmlFor="name" className="auth-label">Full Name:</label>
               <input
                 type="text"
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Enter your name"
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  marginBottom: "10px",
-                  borderRadius: "5px",
-                  border: "1px solid #ccc",
-                }}
+                className="auth-input"
               />
-            </>
+            </div>
           )}
 
-          <label
-            htmlFor="email"
-            style={{ color: "#000", marginBottom: "5px", fontWeight: "bold", alignSelf: "flex-start" }}
-          >
-            Email Address:
-          </label>
-          <input
-            type="email"
-            id="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Enter your email"
-            style={{
-              width: "100%",
-              padding: "10px",
-              marginBottom: "10px",
-              borderRadius: "5px",
-              border: "1px solid #ccc",
-            }}
-          />
+          <div className="auth-input-group">
+            <label htmlFor="email" className="auth-label">Email Address:</label>
+            <input
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              className="auth-input"
+            />
+          </div>
 
-          <label
-            htmlFor="password"
-            style={{ color: "#000", marginBottom: "5px", fontWeight: "bold", alignSelf: "flex-start" }}
-          >
-            Password:
-          </label>
-          <input
-            type="password"
-            id="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Enter your password"
-            style={{
-              width: "100%",
-              padding: "10px",
-              marginBottom: "20px",
-              borderRadius: "5px",
-              border: "1px solid #ccc",
-            }}
-          />
+          <div className="auth-input-group">
+            <label htmlFor="password" className="auth-label">Password:</label>
+            <input
+              type="password"
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
+              className="auth-input"
+            />
+          </div>
 
-          <button
-            type="submit"
-            style={{
-              backgroundColor: "#1DB954",
-              color: "#fff",
-              padding: "10px 20px",
-              border: "none",
-              borderRadius: "5px",
-              fontSize: "16px",
-              cursor: "pointer",
-            }}
-          >
+          <button type="submit" className="auth-button">
             {isSignUp ? "Sign Up" : "Sign In"}
           </button>
 
-          <p
-            onClick={() => setIsSignUp(!isSignUp)}
-            style={{
-              marginTop: "10px",
-              color: "#1DB954",
-              cursor: "pointer",
-              fontSize: "14px",
-              fontWeight: "bold",
-            }}
-          >
+          <p onClick={() => setIsSignUp(!isSignUp)} className="auth-toggle">
             {isSignUp ? "Already have an account? Sign In" : "No account? Sign Up"}
           </p>
         </form>
@@ -173,46 +96,11 @@ const AuthorizationPage = () => {
 
       {/* Status Modal */}
       {showModal && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100vw",
-            height: "100vh",
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1000,
-          }}
-        >
-          <div
-            style={{
-              width: "400px",
-              backgroundColor: "#fff",
-              padding: "20px",
-              borderRadius: "8px",
-              textAlign: "center",
-              boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)",
-            }}
-          >
-            <h2 style={{ color: "#333" }}>Status</h2>
-            <p style={{ margin: "20px 0", color: "#555" }}>{message}</p>
-            <button
-              onClick={() => setShowModal(false)}
-              style={{
-                backgroundColor: "#1DB954",
-                color: "#fff",
-                padding: "10px 20px",
-                border: "none",
-                borderRadius: "5px",
-                fontSize: "16px",
-                cursor: "pointer",
-              }}
-            >
-              Close
-            </button>
+        <div className="auth-modal">
+          <div className="auth-modal-content">
+            <h2>Status</h2>
+            <p>{message}</p>
+            <button onClick={() => setShowModal(false)}>Close</button>
           </div>
         </div>
       )}

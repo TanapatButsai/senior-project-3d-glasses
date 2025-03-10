@@ -1,31 +1,56 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
-const Header = ({ title }) => (
-  <div
-    style={{
-      backgroundColor: "#000", // Black background
-      width: "100%", // Full width
-      padding: "20px 0", // Vertical padding for spacing
-      boxSizing: "border-box", // Ensures padding doesn't affect width
-      position: "fixed", // Sticks the header to the top of the page
-      top: 0, // Aligns it to the very top
-      zIndex: 1000, // Ensures it stays on top of other elements
-    }}
-  >
-    <h1
+const Header = ({ title }) => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem("token"); // ลบ token ออกจาก localStorage
+    navigate("/"); // กลับไปหน้า Login
+  };
+
+  return (
+    <div
       style={{
-        color: "#fff", // White text for contrast
-        fontSize: "24px", // Smaller font size for better fit
-        fontWeight: "bold",
-        textAlign: "center",
-        fontFamily: "Arial, sans-serif",
-        margin: 0, // Remove default margin
+        backgroundColor: "#000",
+        width: "100%",
+        padding: "20px 0",
+        boxSizing: "border-box",
+        position: "fixed",
+        top: 0,
+        zIndex: 1000,
       }}
     >
-      {title}
-    </h1>
-  </div>
-);
+      <h1
+        style={{
+          color: "#fff",
+          fontSize: "24px",
+          fontWeight: "bold",
+          textAlign: "center",
+          fontFamily: "Arial, sans-serif",
+          margin: 0,
+        }}
+      >
+        {title}
+      </h1>
+      <button
+        onClick={handleLogout}
+        style={{
+          position: "absolute",
+          right: "20px",
+          top: "10px",
+          backgroundColor: "red",
+          color: "#fff",
+          padding: "10px 15px",
+          border: "none",
+          borderRadius: "5px",
+          cursor: "pointer",
+        }}
+      >
+        Logout
+      </button>
+    </div>
+  );
+};
 
 export default Header;
-
