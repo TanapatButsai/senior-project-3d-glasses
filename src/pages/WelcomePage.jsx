@@ -27,7 +27,7 @@ const WelcomePage = () => {
             <p>📸 See how they look and shop your favorite styles.</p>
           </div>
 
-          <button onClick={() => navigate("/model-viewer")} className="cta-button">
+          <button onClick={() => navigate("/camera")} className="cta-button">
             Try On Glasses
           </button>
         </div>

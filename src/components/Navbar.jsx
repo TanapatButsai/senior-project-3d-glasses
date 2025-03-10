@@ -6,12 +6,10 @@ const Navbar = () => {
   const navigate = useNavigate();
 
   return (
-    <header className="nav-bar">
+    <header className="navbar"> {/* ✅ Change className from "nav-bar" to "navbar" */}
       <h1 className="logo">Virtual Try On</h1>
       <nav>
         <ul className="nav-links">
-          <li>Eyeglasses</li>
-          <li>Sunglasses</li>
           <li onClick={() => navigate("/")} className="login-button">
             Login
           </li>

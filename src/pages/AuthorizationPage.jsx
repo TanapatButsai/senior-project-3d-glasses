@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import Header from "../components/Header";
+import Navbar from "../components/Navbar"; // Import Navbar
 import Footer from "../components/Footer";
 import "./AuthorizationPage.css"; // Import CSS
 
@@ -39,9 +39,9 @@ const AuthorizationPage = () => {
   };
 
   return (
+    
     <div className="auth-container">
-      <Header title={isSignUp ? "Sign Up" : "Sign In"} />
-
+      <Navbar />
       <div className="auth-form-wrapper">
         <form onSubmit={handleSubmit} className="auth-form">
           <h2>{isSignUp ? "Create an Account" : "Sign in to Your Account"}</h2>
@@ -94,7 +94,6 @@ const AuthorizationPage = () => {
         </form>
       </div>
 
-      {/* Status Modal */}
       {showModal && (
         <div className="auth-modal">
           <div className="auth-modal-content">

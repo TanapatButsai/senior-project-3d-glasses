@@ -5,6 +5,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import * as THREE from "three";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import Navbar from "../components/Navbar";
 
 const CameraPage = () => {
   const videoRef = useRef(null);
@@ -183,58 +184,50 @@ const CameraPage = () => {
   }, []);
 
   return (
-    <div
-      style={{
+    <div style={{ backgroundColor: "#EFE8DF", minHeight: "100vh", width: "100vw" }}>
+      <Navbar />  {/* ✅ Keep this outside of the centered section */}
+  
+      <div style={{
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        height: "100vh",
-        width: "100vw",
-        backgroundColor: "#326a72",
-      }}
-    >
-      <Header title="TRY-ME" />
-      <h1 style={{ color: "#fff", fontSize: "24px", fontWeight: "bold" }}>
-        test
-      </h1>
-
-      {cameraError && (
-        <p style={{ color: "red", fontWeight: "bold" }}>{cameraError}</p>
-      )}
-
-      {/* Face Detection Status */}
-      <p style={{ color: faceDetected ? "green" : "red", fontWeight: "bold" }}>
-        {faceDetected ? "Face Detected ✅" : "No Face Detected ❌ (Glasses Hidden)"}
-      </p>
-
-      {/* Video and Canvas */}
-      <div style={{ position: "relative", width: "800px", height: "600px" }}>
-      <div
-          ref={canvasRef}
-          style={{
-            width: "100%",
-            height: "100%",
-            position: "absolute",
-            zIndex: 1,
-          }}></div>
-        <video
-          ref={videoRef}
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            position: "absolute",
-            zIndex: 1,
-            transform: "scaleX(-1)", // ✅ กลับด้านซ้าย-ขวา (Mirror)
-          }}
-          playsInline></video>
-        
+        marginTop: "70px", /* ✅ Prevent content from overlapping Navbar */
+      }}>
+        {cameraError && (
+          <p style={{ color: "red", fontWeight: "bold" }}>{cameraError}</p>
+        )}
+  
+        <p style={{ color: faceDetected ? "green" : "red", fontWeight: "bold" }}>
+          {faceDetected ? "Face Detected ✅" : "No Face Detected ❌ (Glasses Hidden)"}
+        </p>
+  
+        <div style={{ position: "relative", width: "800px", height: "600px" }}>
+          <div
+            ref={canvasRef}
+            style={{
+              width: "100%",
+              height: "100%",
+              position: "absolute",
+              zIndex: 1,
+            }}
+          ></div>
+          <video
+            ref={videoRef}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              position: "absolute",
+              zIndex: 1,
+              transform: "scaleX(-1)", 
+            }}
+            playsInline
+          ></video>
         </div>
-
-      {/* <Footer /> */}
+      </div>
     </div>
-  );
+  );  
 };
 
 export default CameraPage;
