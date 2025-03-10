@@ -3,9 +3,8 @@ import { FaceMesh } from "@mediapipe/face_mesh";
 import { Camera } from "@mediapipe/camera_utils";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import * as THREE from "three";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
+import "./CameraPage.css";
 
 const CameraPage = () => {
   const videoRef = useRef(null);
@@ -16,23 +15,21 @@ const CameraPage = () => {
   const glassesRef = useRef(null);
   const [cameraError, setCameraError] = useState(null);
   const [faceDetected, setFaceDetected] = useState(false);
+  const [showPermissionPopup, setShowPermissionPopup] = useState(true);
+  const [isCameraAllowed, setIsCameraAllowed] = useState(false);
 
   let noFaceFrames = 0;
-  const NO_FACE_THRESHOLD = 5; // Number of frames before hiding glasses
-  const BASE_SCALE_MULTIPLIER = 5; // Base multiplier for scaling glasses
-  const MIN_SCALE = 0.5; // Minimum scale for glasses
-  const MAX_SCALE = 3.0; // Maximum scale for glasses
-  const SMOOTH_FACTOR = 0.2; // Smooth interpolation factor (0.0 - 1.0)
+  const NO_FACE_THRESHOLD = 5;
 
   const loadGlassesModel = (scene) => {
     const loader = new GLTFLoader();
     loader.load(
-      "/models/gl.glb", // Replace with actual model path
+      "/models/gl.glb",
       (gltf) => {
         const glasses = gltf.scene;
         glassesRef.current = glasses;
         scene.add(glasses);
-        glasses.visible = false; // Hide initially
+        glasses.visible = false;
       },
       undefined,
       (error) => {
@@ -42,6 +39,8 @@ const CameraPage = () => {
   };
 
   useEffect(() => {
+    if (!isCameraAllowed) return;
+
     const scene = new THREE.Scene();
     const camera3D = new THREE.PerspectiveCamera(75, 800 / 600, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -69,17 +68,18 @@ const CameraPage = () => {
       renderer.render(scene, camera3D);
     };
     animate();
-  }, []);
+  }, [isCameraAllowed]);
 
   useEffect(() => {
+    if (!isCameraAllowed) return;
+
     const checkCameraAccess = async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 800, height: 600 } });
         videoRef.current.srcObject = stream;
 
         const faceMesh = new FaceMesh({
-          locateFile: (file) =>
-            `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`,
+          locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`,
         });
 
         faceMesh.setOptions({
@@ -98,72 +98,36 @@ const CameraPage = () => {
             }
             return;
           }
-        
+
           noFaceFrames = 0;
           setFaceDetected(true);
           glassesRef.current.visible = true;
-        
+
           const landmarks = results.multiFaceLandmarks[0];
-        
-          // ✅ จุด Landmark สำคัญ
-          const leftEye = landmarks[33];   // หางตาซ้าย
-          const rightEye = landmarks[263]; // หางตาขวา
-          const noseTip = landmarks[1];    // ปลายจมูก
-          const leftEar = landmarks[234];  // หูซ้าย
-          const rightEar = landmarks[454]; // หูขวา
-          const chin = landmarks[152];     // คาง
-        
-          // ✅ คำนวณขนาดใบหน้า
-          const faceWidth = Math.sqrt(
-            Math.pow(rightEar.x - leftEar.x, 2) +
-            Math.pow(rightEar.y - leftEar.y, 2) +
-            Math.pow(rightEar.z - leftEar.z, 2)
-          );
-        
-          const faceHeight = Math.sqrt(
-            Math.pow(chin.x - noseTip.x, 2) +
-            Math.pow(chin.y - noseTip.y, 2) +
-            Math.pow(chin.z - noseTip.z, 2)
-          );
-        
+
+          const leftEye = landmarks[33];
+          const rightEye = landmarks[263];
+          const noseTip = landmarks[1];
+
           const eyeDistance = Math.sqrt(
             Math.pow(rightEye.x - leftEye.x, 2) +
             Math.pow(rightEye.y - leftEye.y, 2) +
             Math.pow(rightEye.z - leftEye.z, 2)
           );
-        
-          // ✅ ปรับขนาดแว่นให้สัมพันธ์กับระยะห่างดวงตา
-          let scaleX = eyeDistance * 12;
-          let scaleY = eyeDistance * 6;
-          let scaleZ = eyeDistance * 10;
-        
-          glassesRef.current.scale.set(scaleX, scaleY, scaleZ);
-        
-          // ✅ ใช้ตำแหน่ง "ปลายจมูก" เป็นจุดศูนย์กลางของแว่น
-          const noseX = noseTip.x;
-          const noseY = noseTip.y;
-          const midX = (leftEye.x + rightEye.x) / 2;
-          const midY = (leftEye.y + rightEye.y) / 2;
-        
-          // ✅ ปรับตำแหน่งแว่น
+
+          const glassesScale = eyeDistance * 18;
+          glassesRef.current.scale.set(glassesScale, glassesScale, glassesScale);
+
+          const noseX = (noseTip.x - 0.5) * 10;
+          const noseY = -(noseTip.y - 0.5) * 10;
+          const noseZ = -5; // ✅ ปรับตำแหน่งลึกให้เหมาะสม
+
           glassesRef.current.position.set(
-            THREE.MathUtils.lerp(glassesRef.current.position.x, (noseX - 0.5) * 10, 0.2),
-            THREE.MathUtils.lerp(glassesRef.current.position.y, -(midY - 0.5) * 10 + 0.5, 0.2), // 👈 Add a slight offset (0.5) to lift the glasses
-            -faceWidth * 1.8
-          );
-        
-          // ✅ ปรับการหมุนของแว่นให้พอดี
-          const yaw = Math.atan2(rightEye.y - leftEye.y, rightEye.x - leftEye.x);
-          const pitch = Math.atan2(noseTip.y - midY, faceHeight);
-          const roll = -yaw * 0.5;
-        
-          glassesRef.current.rotation.set(
-            THREE.MathUtils.lerp(glassesRef.current.rotation.x, pitch, 0.2),
-            THREE.MathUtils.lerp(glassesRef.current.rotation.y, yaw, 0.2),
-            THREE.MathUtils.lerp(glassesRef.current.rotation.z, roll, 0.2)
+            THREE.MathUtils.lerp(glassesRef.current.position.x, noseX, 0.2),
+            THREE.MathUtils.lerp(glassesRef.current.position.y, noseY, 0.2),
+            THREE.MathUtils.lerp(glassesRef.current.position.z, noseZ, 0.2)
           );
         });
-               
 
         const camera = new Camera(videoRef.current, {
           onFrame: async () => {
@@ -181,53 +145,38 @@ const CameraPage = () => {
     };
 
     checkCameraAccess();
-  }, []);
+  }, [isCameraAllowed]);
 
   return (
-    <div style={{ backgroundColor: "#EFE8DF", minHeight: "100vh", width: "100vw" }}>
-      <Navbar />  {/* ✅ Keep this outside of the centered section */}
-  
-      <div style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        marginTop: "70px", /* ✅ Prevent content from overlapping Navbar */
-      }}>
-        {cameraError && (
-          <p style={{ color: "red", fontWeight: "bold" }}>{cameraError}</p>
-        )}
-  
-        <p style={{ color: faceDetected ? "green" : "red", fontWeight: "bold" }}>
-          {faceDetected ? "Face Detected ✅" : "No Face Detected ❌ (Glasses Hidden)"}
-        </p>
-  
-        <div style={{ position: "relative", width: "800px", height: "600px" }}>
-          <div
-            ref={canvasRef}
-            style={{
-              width: "100%",
-              height: "100%",
-              position: "absolute",
-              zIndex: 1,
-            }}
-          ></div>
-          <video
-            ref={videoRef}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              position: "absolute",
-              zIndex: 1,
-              transform: "scaleX(-1)", 
-            }}
-            playsInline
-          ></video>
+    <div className="camera-container">
+      <Navbar />
+
+      {showPermissionPopup && (
+        <div className="camera-popup">
+          <div className="camera-popup-content">
+            <h2>Allow Camera Access</h2>
+            <p>To use the Virtual Try-On feature, we need access to your camera.</p>
+            <div className="popup-buttons">
+              <button onClick={() => {
+                setShowPermissionPopup(false);
+                setIsCameraAllowed(true);
+              }}>
+                Proceed
+              </button>
+              <button onClick={() => setShowPermissionPopup(true)}>Cancel</button>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
+
+      {isCameraAllowed && (
+        <div className="video-container">
+          <video ref={videoRef} className="video-stream" playsInline></video>
+          <div ref={canvasRef} className="canvas-container"></div>
+        </div>
+      )}
     </div>
-  );  
+  );
 };
 
 export default CameraPage;
