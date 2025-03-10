@@ -118,8 +118,8 @@ const CameraPage = () => {
           const glassesScale = eyeDistance * 18;
           glassesRef.current.scale.set(glassesScale, glassesScale, glassesScale);
 
-          const noseX = (noseTip.x - 0.5) * 10;
-          const noseY = -(noseTip.y - 0.5) * 10;
+          const noseX = -(noseTip.x - 0.5) * 10;
+          const noseY = -(noseTip.y - 0.5) * 10 + 2; // ตำแหน่งแกน y
           const noseZ = -5; // ✅ ปรับตำแหน่งลึกให้เหมาะสม
 
           glassesRef.current.position.set(
