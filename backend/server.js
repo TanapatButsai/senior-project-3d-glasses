@@ -169,7 +169,9 @@ app.delete("/models/:id", async (req, res) => {
 =================================================== */
 
 // ✅ Serve Uploaded Models
-app.use("/models", express.static(UPLOADS_DIR));
+// ✅ Serve Uploaded 3D Model Files Correctly
+app.use("/models", express.static(path.join(__dirname, "uploads")));
+
 
 // ✅ Start Server
 app.listen(PORT, () => {

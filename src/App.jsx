@@ -7,7 +7,7 @@ import ModelUploadPage from './pages/ModelUploadPage';
 import ManagementPage from './pages/ManagementPage';
 import AuthorizationPage from './pages/AuthorizationPage';
 import AdminPage from "./pages/AdminPage";
-
+import ShopPage from "./pages/ShopPage"
 const App = () => {
   return (
     <Router>
@@ -19,6 +19,7 @@ const App = () => {
         <Route path="/model-upload" element={<ModelUploadPage />} />
         <Route path="/model-management" element={<ManagementPage />} />
         <Route path="/admin" element={<AdminPage />} />
+        <Route path="/shop" element={<ShopPage />} />
       </Routes>
     </Router>
   );

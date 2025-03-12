@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
+import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import "./ModelUploadPage.css";
 
 const ModelUploadPage = () => {
@@ -12,14 +14,16 @@ const ModelUploadPage = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [message, setMessage] = useState("");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const modelViewerRef = useRef(null);
+  const threeSceneRef = useRef(null);
 
   const handleNameChange = (e) => setModelName(e.target.value);
   const handleTypeChange = (e) => setModelType(e.target.value);
-  
+
   const handleFileChange = (e) => {
     const uploadedFile = e.target.files[0];
 
-    // ✅ Allow only .glb files
+    // ✅ Only accept .glb files
     if (uploadedFile && uploadedFile.name.split('.').pop().toLowerCase() !== "glb") {
       setMessage("Only .glb files are allowed!");
       setFile(null);
@@ -40,7 +44,7 @@ const ModelUploadPage = () => {
       return;
     }
 
-    // ✅ Extra file validation before showing confirm modal
+    // ✅ Extra validation before showing confirm modal
     if (file.name.split('.').pop().toLowerCase() !== "glb") {
       setMessage("Invalid file type! Please select a .glb file.");
       setShowSuccessModal(true);
@@ -80,6 +84,60 @@ const ModelUploadPage = () => {
       setShowSuccessModal(true);
     }
   };
+
+  // **3D Model Viewer Setup**
+  useEffect(() => {
+    if (showConfirmModal && file) {
+      if (!modelViewerRef.current) return; // ✅ Prevent null reference
+
+      // Cleanup existing Three.js scene
+      if (threeSceneRef.current) {
+        threeSceneRef.current.dispose();
+        modelViewerRef.current.innerHTML = "";
+      }
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+      camera.position.z = 2;
+
+      const renderer = new THREE.WebGLRenderer({ alpha: true });
+      renderer.setSize(200, 200);
+      modelViewerRef.current.appendChild(renderer.domElement);
+      threeSceneRef.current = renderer;
+
+      const loader = new GLTFLoader();
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = function (event) {
+        loader.load(
+          event.target.result,
+          (gltf) => {
+            const model = gltf.scene;
+            model.scale.set(0.8, 0.8, 0.8);
+            scene.add(model);
+
+            const animate = function () {
+              requestAnimationFrame(animate);
+              model.rotation.y += 0.01; // Spin the model
+              renderer.render(scene, camera);
+            };
+            animate();
+          },
+          undefined,
+          (error) => {
+            console.error("Error loading 3D model:", error);
+          }
+        );
+      };
+
+      return () => {
+        if (threeSceneRef.current) {
+          threeSceneRef.current.dispose();
+          threeSceneRef.current = null;
+        }
+      };
+    }
+  }, [showConfirmModal, file]);
 
   return (
     <div className="upload-container">
@@ -123,6 +181,10 @@ const ModelUploadPage = () => {
         <div className="modal-overlay">
           <div className="modal-content">
             <h2 className="modal-title">Confirm Upload</h2>
+            
+            {/* 3D Model Viewer */}
+            <div className="model-viewer" ref={modelViewerRef}></div>
+
             <p className="modal-text"><strong>Model Name:</strong> <span className="red-text">{modelName}</span></p>
             <p className="modal-text"><strong>Model Type:</strong> <span className="red-text">{modelType}</span></p>
             <p className="modal-text"><strong>File:</strong> <span className="red-text">{fileName}</span></p>
@@ -130,19 +192,6 @@ const ModelUploadPage = () => {
               <button onClick={confirmUpload} className="confirm-button">Confirm</button>
               <button onClick={() => setShowConfirmModal(false)} className="cancel-button">Cancel</button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Success/Error Modal */}
-      {showSuccessModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h2>Status</h2>
-            <p>{message}</p>
-            <button onClick={() => setShowSuccessModal(false)} className="upload-button">
-              Close
-            </button>
           </div>
         </div>
       )}
