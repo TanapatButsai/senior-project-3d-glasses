@@ -1,0 +1,131 @@
+/* General Page Styling */
+.upload-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    height: 100vh;
+    width: 100vw;
+    background-color: #ffffff;
+    padding: 20px;
+    box-sizing: border-box;
+    color: white;
+  }
+  
+  /* Form Container */
+  .upload-form-container {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+  }
+  
+  /* Form Styling */
+  .upload-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 40%;
+    padding: 25px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Form Labels */
+  .form-label {
+    color: #000;
+    font-weight: bold;
+    font-size: 16px;
+    text-align: left;
+    width: 100%;
+    margin-bottom: 5px;
+  }
+  
+  /* Input Fields */
+  .form-input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    background-color: #ffffff;
+    color: #000;
+  }
+  
+  /* Upload Button (Smaller) */
+  .upload-button.small-button {
+    background-color: #32537e;
+    color: #fff;
+    padding: 6px 12px;
+    font-size: 14px;
+    width: 90px;
+  }
+  
+  .upload-button.small-button:hover {
+    background-color: #2a486e;
+  }
+  
+  /* Modal Styling */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  
+  .modal-content {
+    width: 350px;
+    background-color: #fff;
+    padding: 25px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.2);
+    color: black;
+  }
+  
+  .modal-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: black;
+  }
+  
+  .modal-text {
+    font-size: 16px;
+    font-weight: bold;
+    color: black;
+  }
+  
+  .red-text {
+    color: red;
+  }
+  
+  /* Confirmation & Cancel Buttons */
+  .modal-buttons {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 15px;
+  }
+  
+  .confirm-button {
+    background-color: #1877F2;
+    color: white;
+    padding: 8px 15px;
+    font-size: 14px;
+  }
+  
+  .cancel-button {
+    background-color: red;
+    color: white;
+    padding: 8px 15px;
+    font-size: 14px;
+  }
+  

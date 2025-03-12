@@ -24,7 +24,7 @@ const CameraPage = () => {
   const loadGlassesModel = (scene) => {
     const loader = new GLTFLoader();
     loader.load(
-      "/models/gl-2.glb",
+      "/models/romy.glb",
       (gltf) => {
         const glasses = gltf.scene;
         glassesRef.current = glasses;
