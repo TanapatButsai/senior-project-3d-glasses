@@ -1,214 +1,209 @@
-import React, { useEffect, useState } from "react";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
+import React, { useRef, useEffect, useState } from "react";
+import { FaceMesh } from "@mediapipe/face_mesh";
+import { Camera } from "@mediapipe/camera_utils";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+import * as THREE from "three";
+import Navbar from "../components/Navbar";
+import "./CameraPage.css";
 
-const ManagementPage = () => {
-  const [models, setModels] = useState([]);
-  const [selectedModel, setSelectedModel] = useState(null);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
+const CameraPage = () => {
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const sceneRef = useRef(null);
+  const rendererRef = useRef(null);
+  const camera3DRef = useRef(null);
+  const glassesRef = useRef(null);
+  const [cameraError, setCameraError] = useState(null);
+  const [faceDetected, setFaceDetected] = useState(false);
+  const [showPermissionPopup, setShowPermissionPopup] = useState(true);
+  const [isCameraAllowed, setIsCameraAllowed] = useState(false);
 
-  // Fetch models from backend
-  useEffect(() => {
-    const fetchModels = async () => {
-      try {
-        const response = await fetch("http://localhost:5050/models");
-        if (!response.ok) throw new Error("Failed to fetch");
-  
-        const data = await response.json();
-        console.log("Fetched Models:", data); // 🔍 Debugging
-        setModels(data);
-      } catch (error) {
-        console.error("Error fetching models:", error);
+  let noFaceFrames = 0;
+  const NO_FACE_THRESHOLD = 5;
+
+  const loadGlassesModel = (scene) => {
+    const loader = new GLTFLoader();
+    loader.load(
+      "/models/gl.glb",
+      (gltf) => {
+        const glasses = gltf.scene;
+        glassesRef.current = glasses;
+        scene.add(glasses);
+        glasses.visible = false;
+      },
+      undefined,
+      (error) => {
+        console.error("Failed to load model:", error);
       }
-    };
-  
-    fetchModels();
-  }, []);
-  
-  // Function to delete a model
-  const handleDelete = async () => {
-    if (!selectedModel || !selectedModel.glasses_id) return;
-
-    try {
-      const response = await fetch(`http://localhost:5050/models/${selectedModel.glasses_id}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) throw new Error("Failed to delete model");
-
-      // Remove the deleted item from the list
-      setModels(models.filter((model) => model.glasses_id !== selectedModel.glasses_id));
-      setShowDeleteModal(false);
-    } catch (error) {
-      console.error("Error deleting model:", error);
-    }
+    );
   };
 
+  // ✅ คำนวณมุมศีรษะ (Head Pose Estimation)
+  const computeHeadPose = (landmarks) => {
+    const leftEar = new THREE.Vector3(landmarks[234].x, landmarks[234].y, landmarks[234].z);
+    const rightEar = new THREE.Vector3(landmarks[454].x, landmarks[454].y, landmarks[454].z);
+    const noseTip = new THREE.Vector3(landmarks[1].x, landmarks[1].y, landmarks[1].z);
+
+    const headDirection = new THREE.Vector3().subVectors(rightEar, leftEar).normalize();
+    const faceDirection = new THREE.Vector3().subVectors(noseTip, leftEar).normalize();
+
+    const yaw = Math.atan2(headDirection.y, headDirection.x);
+    const pitch = Math.atan2(faceDirection.z, faceDirection.y);
+
+    return { yaw, pitch };
+  };
+
+  useEffect(() => {
+    if (!isCameraAllowed) return;
+
+    const scene = new THREE.Scene();
+    const camera3D = new THREE.PerspectiveCamera(75, 800 / 600, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+
+    camera3D.position.set(0, 0, 5);
+    renderer.setSize(800, 600);
+    renderer.setClearColor(0x000000, 0);
+    canvasRef.current.appendChild(renderer.domElement);
+
+    sceneRef.current = scene;
+    camera3DRef.current = camera3D;
+    rendererRef.current = renderer;
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
+    scene.add(ambientLight);
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(5, 10, 7.5).normalize();
+    scene.add(directionalLight);
+
+    loadGlassesModel(scene);
+
+    const animate = () => {
+      requestAnimationFrame(animate);
+      renderer.render(scene, camera3D);
+    };
+    animate();
+  }, [isCameraAllowed]);
+
+  useEffect(() => {
+    if (!isCameraAllowed) return;
+
+    const checkCameraAccess = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 800, height: 600 } });
+        videoRef.current.srcObject = stream;
+
+        const faceMesh = new FaceMesh({
+          locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`,
+        });
+
+        faceMesh.setOptions({
+          maxNumFaces: 1,
+          refineLandmarks: true,
+          minDetectionConfidence: 0.8,
+          minTrackingConfidence: 0.8,
+        });
+
+        faceMesh.onResults((results) => {
+          if (!results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0) {
+            noFaceFrames += 1;
+            if (noFaceFrames >= NO_FACE_THRESHOLD) {
+              glassesRef.current.visible = false;
+              setFaceDetected(false);
+            }
+            return;
+          }
+
+          noFaceFrames = 0;
+          setFaceDetected(true);
+          glassesRef.current.visible = true;
+
+          const landmarks = results.multiFaceLandmarks[0];
+
+          // ✅ คำนวณขนาดแว่นจากความกว้างใบหน้าแทนระยะตา
+          const leftEar = landmarks[234];
+          const rightEar = landmarks[454];
+          const noseTip = landmarks[1];
+
+          const faceWidth = Math.sqrt(
+            Math.pow(rightEar.x - leftEar.x, 2) +
+            Math.pow(rightEar.y - leftEar.y, 2) +
+            Math.pow(rightEar.z - leftEar.z, 2)
+          );
+
+          // ✅ ปรับขนาดแว่นตามขนาดใบหน้า
+          const glassesScale = faceWidth * 1.1;
+          glassesRef.current.scale.set(glassesScale, glassesScale, glassesScale);
+
+          // ✅ ปรับตำแหน่งให้พอดีขึ้น
+          const noseX = -(noseTip.x - 0.5) * 10;
+          const noseY = -(noseTip.y - 0.5) * 10 + 1.0; // 🔹 ลดค่าความสูงของแว่นลง
+          const noseZ = -faceWidth * 1.5;
+
+          glassesRef.current.position.set(
+            THREE.MathUtils.lerp(glassesRef.current.position.x, noseX, 0.2),
+            THREE.MathUtils.lerp(glassesRef.current.position.y, noseY, 0.2),
+            THREE.MathUtils.lerp(glassesRef.current.position.z, noseZ, 0.2)
+          );
+
+          // ✅ ปรับการหมุนของแว่นให้สมจริงขึ้น
+          const { yaw, pitch } = computeHeadPose(landmarks);
+
+          glassesRef.current.rotation.set(
+            THREE.MathUtils.lerp(glassesRef.current.rotation.x, pitch * 0.5, 0.2),
+            THREE.MathUtils.lerp(glassesRef.current.rotation.y, yaw * 0.8, 0.2),
+            0
+          );
+        });
+
+        const camera = new Camera(videoRef.current, {
+          onFrame: async () => {
+            await faceMesh.send({ image: videoRef.current });
+          },
+          width: 800,
+          height: 600,
+        });
+
+        camera.start();
+      } catch (error) {
+        console.error("Camera access error:", error);
+        setCameraError("Camera not accessible. Please check permissions.");
+      }
+    };
+
+    checkCameraAccess();
+  }, [isCameraAllowed]);
+
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "flex-start",
-        height: "100vh",
-        width: "100vw",
-        backgroundColor: "#326a72",
-        padding: "20px",
-      }}
-    >
-      <Header title="Manage 3D Glasses Models" />
+    <div className="camera-container">
+      <Navbar />
 
-      <div
-        style={{
-          flexGrow: 1,
-          width: "80%",
-          backgroundColor: "#ffffff",
-          padding: "20px",
-          borderRadius: "8px",
-          boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.3)",
-          overflowY: "auto",
-        }}
-      >
-        <h2 style={{ color: "#333", marginBottom: "20px" }}>3D Glasses Models</h2>
-        {models.length === 0 ? (
-          <p style={{ color: "#555" }}>No models found.</p>
-        ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <th style={{ padding: "10px", borderBottom: "2px solid #ccc" }}>Preview</th>
-                <th style={{ padding: "10px", borderBottom: "2px solid #ccc" }}>Name</th>
-                <th style={{ padding: "10px", borderBottom: "2px solid #ccc" }}>Type</th>
-                <th style={{ padding: "10px", borderBottom: "2px solid #ccc" }}>Try Count</th>
-                <th style={{ padding: "10px", borderBottom: "2px solid #ccc" }}>Uploaded</th>
-                <th style={{ padding: "10px", borderBottom: "2px solid #ccc" }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-  {models.length === 0 ? (
-    <tr>
-      <td colSpan="6" style={{ textAlign: "center", padding: "20px", color: "#555" }}>
-        No models found.
-      </td>
-    </tr>
-  ) : (
-    models.map((model) => (
-      <tr key={model.glasses_id}>
-        <td style={{ padding: "10px", borderBottom: "1px solid #ccc", textAlign: "center" }}>
-          {model.preview_image ? (
-            <img
-              src={`http://localhost:5050/uploads/${model.preview_image}`}
-              alt={model.name}
-              style={{ width: "50px", height: "50px", objectFit: "cover", borderRadius: "5px" }}
-            />
-          ) : (
-            "No Image"
-          )}
-        </td>
-        <td style={{ padding: "10px", borderBottom: "1px solid #ccc", fontWeight: "bold" }}>
-          {model.name || "Unknown Name"}
-        </td>
-        <td style={{ padding: "10px", borderBottom: "1px solid #ccc" }}>{model.type}</td>
-        <td style={{ padding: "10px", borderBottom: "1px solid #ccc", textAlign: "center" }}>
-          {model.try_count}
-        </td>
-        <td style={{ padding: "10px", borderBottom: "1px solid #ccc" }}>
-          {new Date(model.created_at).toLocaleString()}
-        </td>
-        <td style={{ padding: "10px", borderBottom: "1px solid #ccc" }}>
-          <button
-            onClick={() => {
-              setSelectedModel(model);
-              setShowDeleteModal(true);
-            }}
-            style={{
-              backgroundColor: "#E53935",
-              color: "#fff",
-              border: "none",
-              padding: "8px 16px",
-              borderRadius: "5px",
-              cursor: "pointer",
-            }}
-          >
-            Delete
-          </button>
-        </td>
-      </tr>
-    ))
-  )}
-</tbody>
-
-          </table>
-        )}
-      </div>
-
-      {showDeleteModal && selectedModel && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100vw",
-            height: "100vh",
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1000,
-          }}
-        >
-          <div
-            style={{
-              width: "400px",
-              backgroundColor: "#fff",
-              padding: "20px",
-              borderRadius: "8px",
-              textAlign: "center",
-              boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)",
-            }}
-          >
-            <h2>Confirm Deletion</h2>
-            <p>Are you sure you want to delete <b>{selectedModel.name}</b>?</p>
-            {selectedModel.preview_image && (
-              <img
-                src={`http://localhost:5050/uploads/${selectedModel.preview_image}`}
-                alt="Model Preview"
-                style={{ width: "100px", height: "100px", objectFit: "cover", borderRadius: "5px", marginTop: "10px" }}
-              />
-            )}
-            <div style={{ display: "flex", justifyContent: "space-around", marginTop: "20px" }}>
-              <button
-                onClick={handleDelete}
-                style={{
-                  backgroundColor: "#E53935",
-                  color: "#fff",
-                  padding: "10px 20px",
-                  border: "none",
-                  borderRadius: "5px",
-                }}
-              >
-                Yes
+      {showPermissionPopup && (
+        <div className="camera-popup">
+          <div className="camera-popup-content">
+            <h2>Allow Camera Access</h2>
+            <p>To use the Virtual Try-On feature, we need access to your camera.</p>
+            <div className="popup-buttons">
+              <button onClick={() => {
+                setShowPermissionPopup(false);
+                setIsCameraAllowed(true);
+              }}>
+                Proceed
               </button>
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                style={{
-                  backgroundColor: "#ccc",
-                  padding: "10px 20px",
-                  border: "none",
-                  borderRadius: "5px",
-                }}
-              >
-                Cancel
-              </button>
+              <button onClick={() => setShowPermissionPopup(true)}>Cancel</button>
             </div>
           </div>
         </div>
       )}
 
-      <Footer />
+      {isCameraAllowed && (
+        <div className="video-container">
+          <video ref={videoRef} className="video-stream" playsInline></video>
+          <div ref={canvasRef} className="canvas-container"></div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default ManagementPage;
+export default CameraPage;

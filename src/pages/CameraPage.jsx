@@ -24,7 +24,7 @@ const CameraPage = () => {
   const loadGlassesModel = (scene) => {
     const loader = new GLTFLoader();
     loader.load(
-      "/models/gl.glb",
+      "/models/gl-2.glb",
       (gltf) => {
         const glasses = gltf.scene;
         glassesRef.current = glasses;
@@ -108,6 +108,11 @@ const CameraPage = () => {
           const leftEye = landmarks[33];
           const rightEye = landmarks[263];
           const noseTip = landmarks[1];
+          const leftEar = landmarks[234];
+          const rightEar = landmarks[454];
+
+          const midX = (leftEye.x + rightEye.x) / 2;
+          const midY = (leftEye.y + rightEye.y) / 2;
 
           const eyeDistance = Math.sqrt(
             Math.pow(rightEye.x - leftEye.x, 2) +
@@ -115,18 +120,32 @@ const CameraPage = () => {
             Math.pow(rightEye.z - leftEye.z, 2)
           );
 
-          const glassesScale = eyeDistance * 18;
-          glassesRef.current.scale.set(glassesScale, glassesScale, glassesScale);
-
+          // ✅ Adjust Glasses Position
           const noseX = -(noseTip.x - 0.5) * 10;
-          const noseY = -(noseTip.y - 0.5) * 10 + 2; // ตำแหน่งแกน y
-          const noseZ = -5; // ✅ ปรับตำแหน่งลึกให้เหมาะสม
+          const noseY = -(midY - 0.5) * 10 + 0.5;
+          const noseZ = -5;
 
           glassesRef.current.position.set(
             THREE.MathUtils.lerp(glassesRef.current.position.x, noseX, 0.2),
             THREE.MathUtils.lerp(glassesRef.current.position.y, noseY, 0.2),
             THREE.MathUtils.lerp(glassesRef.current.position.z, noseZ, 0.2)
           );
+
+          // ✅ Improved Yaw (Turning Left & Right)
+          const yaw = Math.atan2(rightEar.y - leftEar.y, rightEar.x - leftEar.x) * 2.0; // Increased sensitivity
+          const stableMidY = (leftEye.y + rightEye.y + landmarks[152].y) / 3; // คำนวณจาก 3 จุด
+          const pitch = Math.atan2(noseTip.y - stableMidY, eyeDistance) * 0.6;
+          const roll = -yaw * 0.6; // Adjust roll factor
+
+          glassesRef.current.rotation.set(
+            THREE.MathUtils.lerp(glassesRef.current.rotation.x, pitch, 0.2),
+            THREE.MathUtils.lerp(glassesRef.current.rotation.y, yaw, 0.3), // Faster turning
+            THREE.MathUtils.lerp(glassesRef.current.rotation.z, roll,  0.2)
+          );
+
+          // ✅ Improved Glasses Scaling
+          const glassesScale = Math.max(Math.min(eyeDistance * 18, 5), 2);
+          glassesRef.current.scale.set(glassesScale, glassesScale, glassesScale);
         });
 
         const camera = new Camera(videoRef.current, {

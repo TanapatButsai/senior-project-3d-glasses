@@ -12,8 +12,8 @@ const App = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<AuthorizationPage />} />
-        <Route path="/welcome" element={<WelcomePage />} />
+        <Route path="/" element={<WelcomePage />} />WelcomePage
+        <Route path="/login" element={<AuthorizationPage />} />
         <Route path="/camera" element={<CameraPage />} />
         <Route path="/model-viewer" element={<ModelViewerPage />} />
         <Route path="/model-upload" element={<ModelUploadPage />} />

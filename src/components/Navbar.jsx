@@ -14,7 +14,7 @@ const Navbar = () => {
       <h1 className="logo-text">Virtual Try On</h1>
       <nav>
         <ul className="nav-links">
-          <li onClick={() => navigate("/")} className="login-button">
+          <li onClick={() => navigate("/login")} className="login-button">
             Login
           </li>
         </ul>
