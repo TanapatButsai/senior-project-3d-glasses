@@ -9,8 +9,8 @@
 
 .shop-container {
   text-align: center;
-  padding: 0;
-  margin-top: 0;
+  padding-top: 80px; /* ✅ ปรับค่าตามที่ต้องการ */
+  margin-top: 000;
   width: 100vw;
   background-color: #fff;
   min-height: 100vh; /* ✅ ป้องกันการถูกตัดขอบ */

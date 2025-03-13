@@ -9,10 +9,10 @@ const NavbarAdmin = () => {
   return (
     <header className="navbar">
       {/* ✅ Logo */}
-      <div className="logo-container">
+      <div className="logo-wrapper" onClick={() => navigate("/")}>
         <img src={logoImage} alt="Logo" className="logo-image" />
+        <h1 className="logo-text">VirtualTryOn</h1>
       </div>
-      <h1 className="logo-text">Admin Dashboard</h1>
 
       {/* ✅ Navigation Links */}
       <nav>

@@ -22,19 +22,27 @@ const Navbar = () => {
 
   return (
     <header className="navbar">
-      <div className="logo-container" onClick={() => navigate("/")} style={{ cursor: "pointer" }}>
+      <div className="logo-wrapper" onClick={() => navigate("/")}>
         <img src={logoImage} alt="Logo" className="logo-image" />
+        <h1 className="logo-text">VirtualTryOn</h1>
       </div>
-      <h1 className="logo-text">Virtual Try On</h1>
       <nav>
         <ul className="nav-links">
           {user ? (
             <>
               <li className="user-name">👤 Hello, {user}</li>
-              <li onClick={handleLogout} className="logout-button">Logout</li>
+              <li>
+                <button onClick={handleLogout} className="modern-logout-button">
+                  Logout
+                </button>
+              </li>
             </>
           ) : (
-            <li onClick={() => navigate("/login")} className="login-button">Login</li>
+            <li>
+              <button onClick={() => navigate("/login")} className="modern-login-button">
+                Login
+              </button>
+            </li>
           )}
         </ul>
       </nav>

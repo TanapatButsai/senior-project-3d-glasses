@@ -28,20 +28,10 @@ body {
 .logo-image {
     width: 58px; /* Adjust size as needed */
     height: 58px;
-}
 
-/* Logo Text (Centered) */
-/* ใช้ฟอนต์ที่ดูหรูเหมือน LensCrafters */
-.logo-text {
-    font-size: 2.5vh;
-    font-weight: bold;
-    color: black;
-    font-family: "Playfair Display", "Cinzel", serif; /* ใช้สองฟอนต์หลัก */
-    flex-grow: 1;
-    text-align: left;
-    letter-spacing: 1px; /* เพิ่มระยะห่างตัวอักษรเล็กน้อย */
+  border: none;
+  border-radius: 50px;
 }
-
 
 /* Navigation Links */
 .nav-links {
@@ -82,3 +72,95 @@ body {
   .logout-button:hover {
     text-decoration: underline;
   }
+
+  .logo-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 18px; /* ✅ เพิ่มระยะห่างจากโลโก้ให้ขยับไปขวานิดหน่อย */
+    cursor: pointer;
+    margin-left: 30px;
+}
+
+.logo-text {
+    font-size: 7vh; /* ✅ ปรับขนาดให้ใหญ่ขึ้น */
+    font-weight: bold; /* ✅ ทำให้ตัวหนา */
+    color: #1e2a38;
+    letter-spacing: 1px;
+    margin: 0;
+    padding-left: 15px; /* ✅ ขยับตัวหนังสือไปทางขวาอีกหน่อย */
+}
+
+/* ✅ Modern Login Button */
+.modern-login-button {
+    background-color: #0057FF; /* Bright Blue */
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 50px; /* Rounded Shape */
+    font-size: 16px;
+    font-weight: normal;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px; /* Space for arrow */
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* ✅ Hover Effect */
+  .modern-login-button:hover {
+    background-color: #0041CC; /* Slightly Darker Blue */
+    transform: scale(1.05);
+  }
+  
+  /* ✅ Arrow Icon */
+  .modern-login-button::after {
+    content: " ➜"; /* Right Arrow */
+    font-size: 16px;
+    transition: transform 0.2s ease-in-out;
+  }
+  
+  /* ✅ Move Arrow Slightly on Hover */
+  .modern-login-button:hover::after {
+    transform: translateX(5px);
+  }
+  
+  
+
+  /* ✅ Modern logout Button */
+.modern-logout-button {
+    background-color: #223252; /* Bright Blue */
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 50px; /* Rounded Shape */
+    font-size: 16px;
+    font-weight: normal;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px; /* Space for arrow */
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* ✅ Hover Effect */
+  .modern-logout-button:hover {
+    background-color: #b11e1e; /* Slightly Darker Blue */
+    transform: scale(1.05);
+  }
+  
+  /* ✅ Arrow Icon */
+  .modern-logout-button::after {
+    content: " ➜"; /* Right Arrow */
+    font-size: 16px;
+    transition: transform 0.2s ease-in-out;
+  }
+  
+  /* ✅ Move Arrow Slightly on Hover */
+  .modern-logout-button:hover::after {
+    transform: translateX(5px);
+  }
+  

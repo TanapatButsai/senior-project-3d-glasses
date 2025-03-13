@@ -27,12 +27,12 @@
 
 /* ✅ Title */
 .logo-text {
-    font-size: 2.5vh;
-    font-weight: bold;
-    color: black;
-    font-family: "Playfair Display", "Cinzel", serif;
-    text-align: center;
+    font-size: 2vh; /* ✅ ปรับขนาดให้ใหญ่ขึ้น */
+    font-weight: bold; /* ✅ ทำให้ตัวหนา */
+    color: #1e2a38;
     letter-spacing: 1px;
+    margin: 0;
+    padding-left: 15px; /* ✅ ขยับตัวหนังสือไปทางขวาอีกหน่อย */
 }
 
 /* ✅ Navigation */

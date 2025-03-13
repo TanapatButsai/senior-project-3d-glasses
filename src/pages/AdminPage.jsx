@@ -52,7 +52,7 @@ const AdminPage = () => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 1, ease: "easeOut", delay: 0.5 }}
         >
-          <img src="/image/image-welcome.png" alt="Virtual Try-On" />
+          <img src="/src/assets/welcome-image.png" alt="Virtual Try-On" />
         </motion.div>
       </motion.div>
     </motion.div>
