@@ -36,6 +36,16 @@ const WelcomePage = () => {
           </div>
 
           <motion.button 
+            onClick={() => navigate("/shop")} 
+            className="cta-button"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+          >
+            Look For Glasses
+          </motion.button>
+          <div></div> 
+          <motion.button 
             onClick={() => navigate("/camera")} 
             className="cta-button"
             whileHover={{ scale: 1.05 }}

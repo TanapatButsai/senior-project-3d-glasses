@@ -1,24 +1,25 @@
 /* Navigation Bar */
 .navbar { 
-    position: fixed; /* ✅ Stick to the top */
+    position: fixed;
     top: 0;
     left: 0;
     width: 98%;
     background: white;
-    padding: 15px 20px;
+    padding: 15px 30px; /* ✅ Adjusted padding for better spacing */
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
     z-index: 1000;
     display: flex;
     align-items: center;
-    justify-content: space-between; /* ✅ Keeps layout balanced */
+    justify-content: space-between;
 }
 
-/* Logo Container (Move to Left) */
+/* ✅ Logo Container (Shifted Right for better spacing) */
 .logo-container {
     display: flex;
     align-items: center;
-    justify-content: flex-start; /* ✅ Push logo to the left */
-    margin-right: auto;
+    justify-content: flex-start;
+    margin-left: 30px; /* ✅ Slightly shifted right */
+    cursor: pointer;
 }
 
 /* Logo Image */
@@ -35,7 +36,7 @@
     color: black;
     font-family: "Playfair Display", "Cinzel", serif; /* ใช้สองฟอนต์หลัก */
     flex-grow: 1;
-    text-align: center;
+    text-align: left;
     letter-spacing: 1px; /* เพิ่มระยะห่างตัวอักษรเล็กน้อย */
 }
 

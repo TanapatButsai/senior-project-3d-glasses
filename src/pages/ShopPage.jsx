@@ -18,6 +18,7 @@ const ShopPage = () => {
 
   return (
     <div className="shop-container">
+      {/* <div><Navbar/></div> */}
       <h1>3D Glasses Shop</h1>
       <div className="grid-container">
         {models.map((model) => (

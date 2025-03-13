@@ -8,7 +8,7 @@ const Navbar = () => {
 
   return (
     <header className="navbar">
-      <div className="logo-container">
+      <div className="logo-container" onClick={() => navigate("/")} style={{ cursor: "pointer" }}>
         <img src={logoImage} alt="Logo" className="logo-image" />
       </div>
       <h1 className="logo-text">Virtual Try On</h1>

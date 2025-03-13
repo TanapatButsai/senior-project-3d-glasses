@@ -5,7 +5,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import * as THREE from "three";
 import Navbar from "../components/Navbar";
 import "./CameraPage.css";
-
+import { useNavigate } from "react-router-dom"; // ✅ Import useNavigate
 const CameraPage = () => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -17,6 +17,7 @@ const CameraPage = () => {
   const [faceDetected, setFaceDetected] = useState(false);
   const [showPermissionPopup, setShowPermissionPopup] = useState(true);
   const [isCameraAllowed, setIsCameraAllowed] = useState(false);
+  const navigate = useNavigate(); // ✅ Initialize navigate
 
   let noFaceFrames = 0;
   const NO_FACE_THRESHOLD = 5;
@@ -36,6 +37,25 @@ const CameraPage = () => {
         console.error("Failed to load model:", error);
       }
     );
+      // ✅ Create "+" Mark using simple lines
+    const lineMaterial = new THREE.LineBasicMaterial({ color: 0xff0000, linewidth: 2 });
+    
+    const crossShape = new THREE.BufferGeometry();
+    const vertices = new Float32Array([
+      // Horizontal line
+      -0.2, 0, 0,
+      0.2, 0, 0,
+      // Vertical line
+      0, -0.2, 0,
+      0,  0.2, 0
+    ]);
+
+    crossShape.setAttribute("position", new THREE.BufferAttribute(vertices, 3));
+  
+    const crossLine = new THREE.LineSegments(crossShape, lineMaterial);
+    crossLine.position.set(0, 0.5, -4.5); // ✅ Slightly above the nose (Y-axis)
+    
+    scene.add(crossLine);
   };
 
   useEffect(() => {
@@ -173,8 +193,15 @@ const CameraPage = () => {
       {showPermissionPopup && (
         <div className="camera-popup">
           <div className="camera-popup-content">
-            <h2>Allow Camera Access</h2>
-            <p>To use the Virtual Try-On feature, we need access to your camera.</p>
+            <h2>Enable Camera Access</h2>
+            <p>To experience our **Virtual Try-On**, we need access to your camera.</p>
+            <div className="popup-guide">
+              <div className="crosshair-mark">+</div>
+              <p className="popup-text">
+                **Align your nose** with the **red cross** on the screen to get the most accurate fit.
+                <br />Make sure your face is well-lit and centered.
+              </p>
+            </div>
             <div className="popup-buttons">
               <button onClick={() => {
                 setShowPermissionPopup(false);
@@ -182,7 +209,7 @@ const CameraPage = () => {
               }}>
                 Proceed
               </button>
-              <button onClick={() => setShowPermissionPopup(true)}>Cancel</button>
+              <button onClick={() => navigate("/")}>Cancel</button> {/* ✅ Redirect to home */}
             </div>
           </div>
         </div>

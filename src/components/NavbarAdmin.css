@@ -1,0 +1,86 @@
+/* ✅ Navbar */
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 98%;
+    background: white;
+    padding: 15px 20px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* ✅ Logo */
+.logo-container {
+    display: flex;
+    align-items: center;
+    margin-right: auto;
+}
+
+.logo-image {
+    width: 50px;
+    height: 50px;
+}
+
+/* ✅ Title */
+.logo-text {
+    font-size: 2.5vh;
+    font-weight: bold;
+    color: black;
+    font-family: "Playfair Display", "Cinzel", serif;
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+/* ✅ Navigation */
+.nav-links {
+    display: flex;
+    list-style: none;
+    gap: 20px;
+    padding: 0;
+    margin: 0;
+    align-items: center;
+}
+
+/* ✅ ปุ่มแบบกล่องสีเทา */
+.nav-button {
+    cursor: pointer;
+    font-weight: bold;
+    padding: 10px 20px;
+    border-radius: 8px;
+    background-color: #e0e0e0; /* ✅ กล่องสีเทา */
+    color: black;
+    transition: background-color 0.3s, box-shadow 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ✅ เมื่อเอาเมาส์ไปชี้ */
+.nav-button:hover {
+    background-color: #d6d6d6; /* ✅ สีเทาเข้มขึ้น */
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* ✅ ปุ่ม Logout */
+.logout-button {
+    background-color: red;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s, box-shadow 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ✅ เมื่อเอาเมาส์ไปชี้ */
+.logout-button:hover {
+    background-color: darkred;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+}
