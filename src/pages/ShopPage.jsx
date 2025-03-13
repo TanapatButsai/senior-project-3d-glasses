@@ -130,7 +130,7 @@ const ModelCard = ({ model, navigate }) => {
 
   // ✅ Navigate to CameraPage with glasses_id only
 // ✅ Navigate to CameraPage with full model data
-const handleTry = () => {
+const handleTry = async () => {
   if (!model) {
     console.error("❌ No model data available to send!");
     alert("Error: Model data is missing. Please try again.");
@@ -139,8 +139,26 @@ const handleTry = () => {
 
   console.log("📌 Sending model:", model);
 
+  // ✅ อัปเดต try_count ใน Database
+  try {
+    const response = await fetch(`http://localhost:5050/models/increment-try/${model.glasses_id}`, {
+      method: "POST",
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to update try count");
+    }
+
+    const data = await response.json();
+    console.log("✅ Updated try_count:", data.try_count);
+  } catch (error) {
+    console.error("❌ Error updating try_count:", error);
+  }
+
+  // ✅ ส่งไปที่ Camera Page
   navigate("/camera", { state: { selectedModel: model } });
 };
+
 
 
   return (

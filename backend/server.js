@@ -130,10 +130,12 @@ app.post("/upload", upload.single("file"), async (req, res) => {
   }
 });
 
-// ✅ Get All Models
+// ✅ Get All Models (Sorted by try_count DESC)
 app.get("/models", async (req, res) => {
   try {
-    const result = await pool.query("SELECT glasses_id, name, type, model_file FROM glasses");
+    const result = await pool.query(
+      "SELECT glasses_id, name, type, model_file, try_count FROM glasses ORDER BY try_count DESC"
+    );
 
     if (result.rows.length === 0) {
       return res.status(404).json({ message: "No models found." });
@@ -141,10 +143,11 @@ app.get("/models", async (req, res) => {
 
     res.json(result.rows);
   } catch (error) {
-    console.error("Error retrieving models:", error);
+    console.error("❌ Error retrieving models:", error);
     res.status(500).json({ message: "Internal server error." });
   }
 });
+
 
 // ✅ Delete a Model
 app.delete("/models/:id", async (req, res) => {
@@ -196,5 +199,25 @@ app.put("/models/:id", async (req, res) => {
   } catch (error) {
       console.error("Error updating model:", error);
       res.status(500).json({ message: "Internal server error" });
+  }
+});
+// ✅ Increment try_count for glasses
+app.post("/models/increment-try/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+      const result = await pool.query(
+          "UPDATE glasses SET try_count = try_count + 1 WHERE glasses_id = $1 RETURNING try_count",
+          [id]
+      );
+
+      if (result.rowCount === 0) {
+          return res.status(404).json({ success: false, message: "Glasses not found" });
+      }
+
+      res.json({ success: true, try_count: result.rows[0].try_count });
+  } catch (error) {
+      console.error("❌ Error updating try_count:", error);
+      res.status(500).json({ success: false, message: "Internal server error." });
   }
 });

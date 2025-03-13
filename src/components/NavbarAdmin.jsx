@@ -17,18 +17,18 @@ const NavbarAdmin = () => {
       {/* ✅ Navigation Links */}
       <nav>
         <ul className="nav-links">
-          <li onClick={() => navigate("/admin")} className="nav-button">
+          {/* <li onClick={() => navigate("/admin")} className="nav-button">
             Dashboard
-          </li>
-          <li onClick={() => navigate("/manage-models")} className="nav-button">
+          </li> */}
+          <li onClick={() => navigate("/model-management")} className="nav-button">
             Manage Models
           </li>
           <li onClick={() => navigate("/model-upload")} className="nav-button">
             Upload Model
           </li>
-          <li onClick={() => navigate("/manage-users")} className="nav-button">
+          {/* <li onClick={() => navigate("/manage-users")} className="nav-button">
             Manage Users
-          </li>
+          </li> */}
           <li onClick={() => navigate("/login")} className="logout-button">
             Logout
           </li>
