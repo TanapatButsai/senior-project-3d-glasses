@@ -9,7 +9,10 @@ const ModelManagementPage = () => {
   const [models, setModels] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const modelsPerPage = 7; // ✅ กำหนดให้แสดงแค่ 7 โมเดลต่อหน้า
-
+  const [editModel, setEditModel] = useState(null);
+  const [editedName, setEditedName] = useState("");
+  const [editedType, setEditedType] = useState("");
+  
   useEffect(() => {
     fetchModels();
   }, []);
@@ -34,7 +37,33 @@ const ModelManagementPage = () => {
       console.error("❌ Error deleting model:", error);
     }
   };
+  const handleEditModel = (model) => {
+    setEditModel(model);
+    setEditedName(model.name);
+    setEditedType(model.type);
+  };
+  const handleCancelEdit = () => {
+    setEditModel(null);
+  };
+  const handleSaveEdit = async () => {
+    try {
+      const updatedModel = { ...editModel, name: editedName, type: editedType };
 
+      await axios.put(`http://localhost:5050/models/${editModel.glasses_id}`, {
+        name: editedName,
+        type: editedType
+    });
+    
+
+      setModels((prevModels) =>
+        prevModels.map((m) => (m.glasses_id === editModel.glasses_id ? updatedModel : m))
+      );
+
+      setEditModel(null);
+    } catch (error) {
+      console.error("❌ Error updating model:", error);
+    }
+  };
   // ✅ คำนวณ Index ของโมเดลในหน้านั้น ๆ
   const indexOfLastModel = currentPage * modelsPerPage;
   const indexOfFirstModel = indexOfLastModel - modelsPerPage;
@@ -46,9 +75,33 @@ const ModelManagementPage = () => {
       <h1>Model Management</h1>
       <div className="model-management-list">
         {currentModels.map((model) => (
-          <ModelCard key={model.glasses_id} model={model} onDelete={handleDelete} />
+          <ModelCard key={model.glasses_id} model={model} onDelete={handleDelete} onEdit={handleEditModel} />
         ))}
       </div>
+      {editModel && (
+        <div className="edit-popup">
+          <div className="edit-popup-content">
+            <h2>Edit Model</h2>
+            <label>Model Name:</label>
+            <input
+              type="text"
+              value={editedName}
+              onChange={(e) => setEditedName(e.target.value)}
+            />
+
+            <label>Type:</label>
+            <select value={editedType} onChange={(e) => setEditedType(e.target.value)}>
+              <option value="Sunglasses">Sunglasses</option>
+              <option value="Prescription Glasses">Prescription Glasses</option>
+            </select>
+
+            <div className="popup-buttons">
+              <button className="save-btn" onClick={handleSaveEdit}>Save</button>
+              <button className="cancel-btn" onClick={handleCancelEdit}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ✅ Pagination Controls */}
       <div className="pagination">
@@ -74,7 +127,7 @@ const ModelManagementPage = () => {
   );
 };
 
-const ModelCard = ({ model, onDelete }) => {
+const ModelCard = ({ model, onDelete,onEdit }) => {
   const containerRef = useRef(null);
   let scene, camera, renderer, modelObject;
 
@@ -165,7 +218,15 @@ const ModelCard = ({ model, onDelete }) => {
       animateReturn();
     }
   };
+    const handleEditModel = (model) => {
+      setEditModel(model);
+      setEditedName(model.name);
+      setEditedType(model.type);
+    };
+    
+    // 📌 ยกเลิกการแก้ไข
 
+    
   return (
     <div className="model-management-card">
       <div
@@ -178,7 +239,7 @@ const ModelCard = ({ model, onDelete }) => {
         <h3>{model.name}</h3>
         <p><strong>Type:</strong> {model.type}</p>
         <p><strong>Try Count:</strong> {model.try_count}</p>
-        <button className="edit-button">Edit</button>
+        <button className="edit-button" onClick={() => onEdit(model)}>Edit</button>
         <button className="delete-button" onClick={() => onDelete(model.glasses_id)}>Delete</button>
       </div>
     </div>

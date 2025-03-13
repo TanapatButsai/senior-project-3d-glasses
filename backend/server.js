@@ -177,3 +177,24 @@ app.use("/models", express.static(path.join(__dirname, "uploads")));
 app.listen(PORT, () => {
   console.log(`✅ Backend running at http://localhost:${PORT}`);
 });
+
+app.put("/models/:id", async (req, res) => {
+  const { id } = req.params;
+  const { name, type } = req.body;
+
+  try {
+      const result = await pool.query(
+          "UPDATE glasses SET name = $1, type = $2, updated_at = NOW() WHERE glasses_id = $3 RETURNING *",
+          [name, type, id]
+      );
+
+      if (result.rows.length === 0) {
+          return res.status(404).json({ message: "Model not found" });
+      }
+
+      res.json({ message: "Model updated successfully!", model: result.rows[0] });
+  } catch (error) {
+      console.error("Error updating model:", error);
+      res.status(500).json({ message: "Internal server error" });
+  }
+});
