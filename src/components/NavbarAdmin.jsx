@@ -23,7 +23,7 @@ const NavbarAdmin = () => {
           <li onClick={() => navigate("/manage-models")} className="nav-button">
             Manage Models
           </li>
-          <li onClick={() => navigate("/upload-model")} className="nav-button">
+          <li onClick={() => navigate("/model-upload")} className="nav-button">
             Upload Model
           </li>
           <li onClick={() => navigate("/manage-users")} className="nav-button">
