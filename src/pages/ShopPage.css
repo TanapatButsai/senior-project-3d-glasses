@@ -1,9 +1,10 @@
-body, html {
+.shop-container body, .shop-container html {
   margin: 0;
   padding: 0;
   width: 100%;
   height: 100%;
   background-color: #fff;
+  overflow: auto; /* ✅ ป้องกันการถูกบีบ */
 }
 
 .shop-container {
@@ -12,19 +13,24 @@ body, html {
   margin-top: 0;
   width: 100vw;
   background-color: #fff;
+  min-height: 100vh; /* ✅ ป้องกันการถูกตัดขอบ */
+  display: flex;
+  flex-direction: column;
 }
 
-.grid-container {
+.shop-container .grid-container {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 20px;
   justify-content: center;
-  align-items: center;
+  align-items: start; /* ✅ เปลี่ยนจาก center เป็น start */
   padding: 20px;
   width: 100%;
+  flex-grow: 1; /* ✅ ทำให้ container เต็มพื้นที่ */
+  overflow-y: auto; /* ✅ ให้เลื่อนลงได้ถ้าจอล้น */
 }
 
-.model-card {
+.shop-container .model-card {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -36,16 +42,16 @@ body, html {
   width: 90%;
 }
 
-.model-card:hover {
+.shop-container .model-card:hover {
   transform: scale(1.05);
 }
 
-.model-view {
+.shop-container .model-view {
   width: 200px;
   height: 200px;
 }
 
-.model-name {
+.shop-container .model-name {
   margin-top: 10px;
   font-size: 14px;
   font-weight: bold;
@@ -53,7 +59,7 @@ body, html {
 }
 
 /* ✅ ปุ่ม TRY */
-.try-button {
+.shop-container .try-button {
   margin-top: 10px;
   background-color: black;
   color: white;
@@ -65,19 +71,19 @@ body, html {
   transition: 0.3s ease-in-out;
 }
 
-.try-button:hover {
+.shop-container .try-button:hover {
   background-color: #333;
 }
 
 /* Responsive */
 @media screen and (max-width: 992px) {
-  .grid-container {
+  .shop-container .grid-container {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media screen and (max-width: 600px) {
-  .grid-container {
+  .shop-container .grid-container {
     grid-template-columns: repeat(1, 1fr);
   }
 }

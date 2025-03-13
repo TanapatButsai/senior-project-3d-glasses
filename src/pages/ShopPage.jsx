@@ -4,7 +4,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import GlassesFilter from "../components/GlassesFilter";
-import "./ShopPage.css";
+import "./ShopPage.css"; // ✅ Scoped CSS to .shop-container
 
 const ShopPage = () => {
   const [models, setModels] = useState([]);
@@ -23,7 +23,7 @@ const ShopPage = () => {
   );
 
   return (
-    <div className="shop-container">
+    <div className="shop-container"> {/* ✅ Wrap Everything in .shop-container */}
       <Navbar />
       <GlassesFilter setFilter={setFilter} />
       <div className="grid-container">
@@ -77,16 +77,26 @@ const ModelCard = ({ model, navigate }) => {
       undefined,
       (error) => {
         console.error("❌ Model Load Error:", error);
-        containerRef.current.innerHTML = `<p style="color:red;">Failed to load model</p>`;
+        if (containerRef.current) {
+          containerRef.current.innerHTML = `<p style="color:red;">Failed to load model</p>`;
+        }
       }
     );
 
     return () => {
       if (renderer) {
         renderer.dispose();
-        containerRef.current.innerHTML = "";
+      }
+      if (scene) {
+        while (scene.children.length > 0) {
+          scene.remove(scene.children[0]);
+        }
+      }
+      if (containerRef.current) {
+        containerRef.current.innerHTML = ""; // ✅ Fix: Ensure ref exists before modifying
       }
     };
+    
   }, [model.model_file]);
 
   // ✅ Animation Effects (Hover + Smooth Reset)
