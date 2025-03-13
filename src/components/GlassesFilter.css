@@ -1,0 +1,39 @@
+.glasses-filter {
+  position: sticky;
+  top:90px; /* ✅ ป้องกันไม่ให้ถูก navbar ทับ */
+  z-index: 999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f8f8f8;
+  padding: 12px 0;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  gap: 12px;
+  width: 100%;
+}
+  
+  .filter-btn {
+    background: none;
+    border: 2px solid transparent;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s ease-in-out;
+    border-radius: 8px;
+    margin: 0 5px;
+    color: #333;
+  }
+  
+  .filter-btn:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    border-color: #1e54b7;
+    color: #1e54b7;
+  }
+  
+  .filter-btn.active {
+    background-color: #1e54b7;
+    color: white;
+    border-color: #1e54b7;
+  }
+  

@@ -1,14 +1,16 @@
 import React, { useEffect, useState, useRef } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
-import "./ShopPage.css";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import { div } from "framer-motion/client";
+import GlassesFilter from "../components/GlassesFilter";
+import "./ShopPage.css";
 
 const ShopPage = () => {
   const [models, setModels] = useState([]);
+  const [filter, setFilter] = useState("all");
+  const navigate = useNavigate();
 
-  // ✅ Fetch models from backend
   useEffect(() => {
     fetch("http://localhost:5050/models")
       .then((res) => res.json())
@@ -16,20 +18,24 @@ const ShopPage = () => {
       .catch((error) => console.error("❌ Error fetching models:", error));
   }, []);
 
+  const filteredModels = models.filter(
+    (model) => filter === "all" || model.type === filter
+  );
+
   return (
     <div className="shop-container">
-      {/* <div><Navbar/></div> */}
-      <h1>3D Glasses Shop</h1>
+      <Navbar />
+      <GlassesFilter setFilter={setFilter} />
       <div className="grid-container">
-        {models.map((model) => (
-          <ModelCard key={model.glasses_id} model={model} />
+        {filteredModels.map((model) => (
+          <ModelCard key={model.glasses_id} model={model} navigate={navigate} />
         ))}
       </div>
     </div>
   );
 };
 
-const ModelCard = ({ model }) => {
+const ModelCard = ({ model, navigate }) => {
   const containerRef = useRef(null);
   let scene, camera, renderer, modelObject;
 
@@ -38,25 +44,28 @@ const ModelCard = ({ model }) => {
 
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
-    camera.position.z = 3;
+    camera.position.set(0, 0, 5);
 
     renderer = new THREE.WebGLRenderer({ alpha: true });
-    renderer.setSize(150, 150);
+    renderer.setSize(200, 200);
     containerRef.current.appendChild(renderer.domElement);
 
     const loader = new GLTFLoader();
-    const modelURL = `http://localhost:5050/models/${model.model_file}`; // ✅ Absolute path
-
-    console.log("📌 Loading model:", modelURL);
+    const modelURL = `http://localhost:5050/models/${model.model_file}`;
 
     loader.load(
       modelURL,
       (gltf) => {
-        modelObject = gltf.scene;
-        modelObject.scale.set(1.5, 1.5, 1.5);
-        modelObject.rotation.set(0, Math.PI, 0); // ✅ Default front view
-        scene.add(modelObject);
+        if (containerRef.current?.modelObject) {
+          scene.remove(containerRef.current.modelObject);
+        }
 
+        modelObject = gltf.scene;
+        modelObject.scale.set(2, 2, 2);
+        modelObject.position.set(0, -0.5, 0);
+        modelObject.rotation.set(0, 0, 0);
+
+        scene.add(modelObject);
         containerRef.current.modelObject = modelObject;
 
         const animate = () => {
@@ -73,7 +82,6 @@ const ModelCard = ({ model }) => {
     );
 
     return () => {
-      console.log("🛠 Cleaning up WebGL Renderer");
       if (renderer) {
         renderer.dispose();
         containerRef.current.innerHTML = "";
@@ -81,31 +89,51 @@ const ModelCard = ({ model }) => {
     };
   }, [model.model_file]);
 
-  // ✅ Hover Effects (Spin Animation)
+  // ✅ Animation Effects (Hover + Smooth Reset)
   const handleMouseEnter = () => {
     if (containerRef.current?.modelObject) {
-      containerRef.current.spinInterval = setInterval(() => {
-        containerRef.current.modelObject.rotation.y += 0.05;
-      }, 30);
+      if (!containerRef.current.spinInterval) {
+        containerRef.current.spinInterval = setInterval(() => {
+          containerRef.current.modelObject.rotation.y += 0.05;
+        }, 30);
+      }
     }
   };
 
   const handleMouseLeave = () => {
     if (containerRef.current?.modelObject) {
       clearInterval(containerRef.current.spinInterval);
-      containerRef.current.modelObject.rotation.y = Math.PI;
+      containerRef.current.spinInterval = null;
+
+      const targetRotation = 0;
+      const animateReturn = () => {
+        if (!containerRef.current?.modelObject) return;
+        containerRef.current.modelObject.rotation.y = THREE.MathUtils.lerp(
+          containerRef.current.modelObject.rotation.y,
+          targetRotation,
+          0.1
+        );
+        if (
+          Math.abs(containerRef.current.modelObject.rotation.y - targetRotation) > 0.01
+        ) {
+          requestAnimationFrame(animateReturn);
+        }
+      };
+      animateReturn();
     }
   };
 
+  // ✅ ไปหน้า CameraPage พร้อมข้อมูลแว่น
+  const handleTry = () => {
+    navigate("/camera", { state: { selectedModel: model } });
+  };
+
   return (
-    <div>
-      <div><Navbar/></div>
-      <div className="model-card" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-        <div ref={containerRef} className="model-view"></div>
-        <p className="model-name">{model.name}</p>
-      </div>
+    <div className="model-card" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+      <div ref={containerRef} className="model-view"></div>
+      <p className="model-name">{model.name}</p>
+      <button className="try-button" onClick={handleTry}>TRY</button>
     </div>
-    
   );
 };
 

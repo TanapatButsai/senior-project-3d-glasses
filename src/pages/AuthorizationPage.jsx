@@ -16,30 +16,40 @@ const AuthorizationPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // ✅ ตรวจสอบว่าถ้าเป็น admin ให้ redirect ไป /admin ทันที
+    if (email === "admin@gmail.com" && password === "123456") {
+      localStorage.setItem("user", "Admin");
+      navigate("/admin");
+      return;
+    }
+
     const url = isSignUp ? "http://localhost:5050/auth/signup" : "http://localhost:5050/auth/signin";
     const payload = isSignUp ? { name, email, password } : { email, password };
-
+  
     try {
       const response = await axios.post(url, payload);
+  
       if (response.data.token) {
         localStorage.setItem("token", response.data.token);
+        const userName = isSignUp ? name : response.data.name || email.split("@")[0]; 
+        localStorage.setItem("user", userName);
       }
-
+  
       setMessage(response.data.message);
       setShowModal(true);
-
+  
       setTimeout(() => {
         setShowModal(false);
-        navigate("/welcome");
+        navigate("/");
       }, 2000);
     } catch (error) {
       setMessage(error.response?.data?.message || "An error occurred.");
       setShowModal(true);
     }
   };
-
+  
   return (
-    
     <div className="auth-container">
       <Navbar />
       <div className="auth-form-wrapper">

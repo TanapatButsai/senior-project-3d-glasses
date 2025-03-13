@@ -1,10 +1,24 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import "./Navbar.css"; // Import styles
 import logoImage from "../assets/icon-192x192.png"; // Import your image
 
 const Navbar = () => {
   const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    setUser(storedUser);
+  }, []);
+
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setUser(null);
+    navigate("/");
+  };
 
   return (
     <header className="navbar">
@@ -14,9 +28,14 @@ const Navbar = () => {
       <h1 className="logo-text">Virtual Try On</h1>
       <nav>
         <ul className="nav-links">
-          <li onClick={() => navigate("/login")} className="login-button">
-            Login
-          </li>
+          {user ? (
+            <>
+              <li className="user-name">👤 Hello, {user}</li>
+              <li onClick={handleLogout} className="logout-button">Logout</li>
+            </>
+          ) : (
+            <li onClick={() => navigate("/login")} className="login-button">Login</li>
+          )}
         </ul>
       </nav>
     </header>
