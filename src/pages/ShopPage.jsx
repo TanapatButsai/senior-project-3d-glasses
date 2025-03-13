@@ -4,7 +4,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import GlassesFilter from "../components/GlassesFilter";
-import "./ShopPage.css"; // ✅ Scoped CSS to .shop-container
+import "./ShopPage.css";
 
 const ShopPage = () => {
   const [models, setModels] = useState([]);
@@ -23,7 +23,7 @@ const ShopPage = () => {
   );
 
   return (
-    <div className="shop-container"> {/* ✅ Wrap Everything in .shop-container */}
+    <div className="shop-container">
       <Navbar />
       <GlassesFilter setFilter={setFilter} />
       <div className="grid-container">
@@ -37,7 +37,8 @@ const ShopPage = () => {
 
 const ModelCard = ({ model, navigate }) => {
   const containerRef = useRef(null);
-  let scene, camera, renderer, modelObject;
+  let scene, camera, renderer;
+  let modelObject = null; // ✅ Define modelObject at the top
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -56,8 +57,8 @@ const ModelCard = ({ model, navigate }) => {
     loader.load(
       modelURL,
       (gltf) => {
-        if (containerRef.current?.modelObject) {
-          scene.remove(containerRef.current.modelObject);
+        if (modelObject) {
+          scene.remove(modelObject);
         }
 
         modelObject = gltf.scene;
@@ -66,7 +67,6 @@ const ModelCard = ({ model, navigate }) => {
         modelObject.rotation.set(0, 0, 0);
 
         scene.add(modelObject);
-        containerRef.current.modelObject = modelObject;
 
         const animate = () => {
           requestAnimationFrame(animate);
@@ -93,50 +93,55 @@ const ModelCard = ({ model, navigate }) => {
         }
       }
       if (containerRef.current) {
-        containerRef.current.innerHTML = ""; // ✅ Fix: Ensure ref exists before modifying
+        containerRef.current.innerHTML = "";
       }
     };
-    
   }, [model.model_file]);
 
-  // ✅ Animation Effects (Hover + Smooth Reset)
+  // ✅ Hover Effects (Spin Animation) - Added Safeguard
   const handleMouseEnter = () => {
-    if (containerRef.current?.modelObject) {
-      if (!containerRef.current.spinInterval) {
-        containerRef.current.spinInterval = setInterval(() => {
-          containerRef.current.modelObject.rotation.y += 0.05;
-        }, 30);
-      }
+    if (!modelObject) return; // ✅ Ensure modelObject exists
+    if (!containerRef.current.spinInterval) {
+      containerRef.current.spinInterval = setInterval(() => {
+        modelObject.rotation.y += 0.05;
+      }, 30);
     }
   };
 
   const handleMouseLeave = () => {
-    if (containerRef.current?.modelObject) {
-      clearInterval(containerRef.current.spinInterval);
-      containerRef.current.spinInterval = null;
+    if (!modelObject) return; // ✅ Ensure modelObject exists
+    clearInterval(containerRef.current.spinInterval);
+    containerRef.current.spinInterval = null;
 
-      const targetRotation = 0;
-      const animateReturn = () => {
-        if (!containerRef.current?.modelObject) return;
-        containerRef.current.modelObject.rotation.y = THREE.MathUtils.lerp(
-          containerRef.current.modelObject.rotation.y,
-          targetRotation,
-          0.1
-        );
-        if (
-          Math.abs(containerRef.current.modelObject.rotation.y - targetRotation) > 0.01
-        ) {
-          requestAnimationFrame(animateReturn);
-        }
-      };
-      animateReturn();
-    }
+    const targetRotation = 0;
+    const animateReturn = () => {
+      if (!modelObject) return;
+      modelObject.rotation.y = THREE.MathUtils.lerp(
+        modelObject.rotation.y,
+        targetRotation,
+        0.1
+      );
+      if (Math.abs(modelObject.rotation.y - targetRotation) > 0.01) {
+        requestAnimationFrame(animateReturn);
+      }
+    };
+    animateReturn();
   };
 
-  // ✅ ไปหน้า CameraPage พร้อมข้อมูลแว่น
-  const handleTry = () => {
-    navigate("/camera", { state: { selectedModel: model } });
-  };
+  // ✅ Navigate to CameraPage with glasses_id only
+// ✅ Navigate to CameraPage with full model data
+const handleTry = () => {
+  if (!model) {
+    console.error("❌ No model data available to send!");
+    alert("Error: Model data is missing. Please try again.");
+    return;
+  }
+
+  console.log("📌 Sending model:", model);
+
+  navigate("/camera", { state: { selectedModel: model } });
+};
+
 
   return (
     <div className="model-card" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>

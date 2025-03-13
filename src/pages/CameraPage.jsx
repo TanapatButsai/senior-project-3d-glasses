@@ -5,7 +5,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import * as THREE from "three";
 import Navbar from "../components/Navbar";
 import "./CameraPage.css";
-import { useNavigate } from "react-router-dom"; // ✅ Import useNavigate
+import { useNavigate, useLocation } from "react-router-dom"; // ✅ Import useNavigate
 const CameraPage = () => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -18,14 +18,21 @@ const CameraPage = () => {
   const [showPermissionPopup, setShowPermissionPopup] = useState(true);
   const [isCameraAllowed, setIsCameraAllowed] = useState(false);
   const navigate = useNavigate(); // ✅ Initialize navigate
+  const location = useLocation();
+  const selectedModel = location.state?.selectedModel || null;
+  
+  if (!selectedModel) {
+    console.error("❌ No model data received!");
+  }
 
   let noFaceFrames = 0;
   const NO_FACE_THRESHOLD = 5;
 
   const loadGlassesModel = (scene) => {
     const loader = new GLTFLoader();
+    const modelURL = `http://localhost:5050/models/${selectedModel.model_file}`;
     loader.load(
-      "/models/romy.glb",
+      modelURL,
       (gltf) => {
         const glasses = gltf.scene;
         glassesRef.current = glasses;
