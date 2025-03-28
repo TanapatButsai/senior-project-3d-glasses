@@ -14,6 +14,7 @@ const CameraPage = () => {
   const rendererRef = useRef(null);
   const camera3DRef = useRef(null);
   const glassesRef = useRef(null);
+  const prevLandmarks = useRef(null);
   const [cameraError, setCameraError] = useState(null);
   const [faceDetected, setFaceDetected] = useState(false);
   const [showPermissionPopup, setShowPermissionPopup] = useState(true);
@@ -21,7 +22,7 @@ const CameraPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const selectedModel = location.state?.selectedModel || null;
-  
+
   if (!selectedModel) {
     console.error("❌ No model data received!");
   }
@@ -46,12 +47,11 @@ const CameraPage = () => {
       }
     );
 
-    // ✅ Add a Crosshair for Face Alignment
     const lineMaterial = new THREE.LineBasicMaterial({ color: 0xff0000, linewidth: 2 });
     const crossShape = new THREE.BufferGeometry();
     const vertices = new Float32Array([
-      -0.2, 0, 0, 0.2, 0, 0, // Horizontal line
-      0, -0.2, 0, 0, 0.2, 0  // Vertical line
+      -0.2, 0, 0, 0.2, 0, 0,
+      0, -0.2, 0, 0, 0.2, 0
     ]);
     crossShape.setAttribute("position", new THREE.BufferAttribute(vertices, 3));
     const crossLine = new THREE.LineSegments(crossShape, lineMaterial);
@@ -112,7 +112,7 @@ const CameraPage = () => {
 
         faceMesh.onResults((results) => {
           if (!results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0) {
-            noFaceFrames += 1;
+            noFaceFrames++;
             if (noFaceFrames >= NO_FACE_THRESHOLD) {
               glassesRef.current.visible = false;
               setFaceDetected(false);
@@ -120,53 +120,68 @@ const CameraPage = () => {
             return;
           }
 
-          noFaceFrames = 0;
-          setFaceDetected(true);
-          glassesRef.current.visible = true;
-
           const landmarks = results.multiFaceLandmarks[0];
+          if (!prevLandmarks.current) {
+            prevLandmarks.current = landmarks.map(p => ({ ...p }));
+          } else {
+            landmarks.forEach((pt, i) => {
+              prevLandmarks.current[i].x = THREE.MathUtils.lerp(prevLandmarks.current[i].x, pt.x, 0.2);
+              prevLandmarks.current[i].y = THREE.MathUtils.lerp(prevLandmarks.current[i].y, pt.y, 0.2);
+              prevLandmarks.current[i].z = THREE.MathUtils.lerp(prevLandmarks.current[i].z, pt.z, 0.2);
+            });
+          }
 
-          const leftEye = landmarks[33];
-          const rightEye = landmarks[263];
-          const noseTip = landmarks[1];
-          const leftEar = landmarks[234];
-          const rightEar = landmarks[454];
+          const smoothLandmarks = prevLandmarks.current;
+          const leftEye = smoothLandmarks[33];
+          const rightEye = smoothLandmarks[263];
+          const noseTip = smoothLandmarks[1];
+          const leftEar = smoothLandmarks[234];
+          const rightEar = smoothLandmarks[454];
+          const chin = smoothLandmarks[152];
 
-          const midX = (leftEye.x + rightEye.x) / 2;
-          const midY = (leftEye.y + rightEye.y) / 2;
-
-          const eyeDistance = Math.sqrt(
-            Math.pow(rightEye.x - leftEye.x, 2) +
-            Math.pow(rightEye.y - leftEye.y, 2) +
-            Math.pow(rightEye.z - leftEye.z, 2)
+          const eyeCenter = new THREE.Vector3(
+            (leftEye.x + rightEye.x) / 2,
+            (leftEye.y + rightEye.y) / 2,
+            (leftEye.z + rightEye.z) / 2
           );
 
-          // ✅ Adjustments for Stability
-          const noseX = -(noseTip.x - 0.5) * 10;
-          const noseY = -(midY - 0.5) * 10 + 0.5;
-          const noseZ = -5;
+          const posX = -(eyeCenter.x - 0.5) * 10;
+          const posY = -(eyeCenter.y - 0.5) * 10;
+          const posZ = -5;
 
           glassesRef.current.position.set(
-            THREE.MathUtils.lerp(glassesRef.current.position.x, noseX, 0.2),
-            THREE.MathUtils.lerp(glassesRef.current.position.y, noseY, 0.2),
-            THREE.MathUtils.lerp(glassesRef.current.position.z, noseZ, 0.2)
+            THREE.MathUtils.lerp(glassesRef.current.position.x, posX, 0.2),
+            THREE.MathUtils.lerp(glassesRef.current.position.y, posY, 0.2),
+            THREE.MathUtils.lerp(glassesRef.current.position.z, posZ, 0.2)
           );
 
-          // ✅ Improved Rotation Stability
-          const yaw = Math.atan2(rightEar.y - leftEar.y, rightEar.x - leftEar.x) * 1.2;
-          const stableMidY = (leftEye.y + rightEye.y + landmarks[152].y * 2) / 4;
-          const pitch = Math.atan2(noseTip.y - stableMidY, eyeDistance) * 0.5;
-          const roll = -yaw * 0.4;
-
-          glassesRef.current.rotation.set(
-            THREE.MathUtils.lerp(glassesRef.current.rotation.x, pitch, 0.2),
-            THREE.MathUtils.lerp(glassesRef.current.rotation.y, yaw, 0.3),
-            THREE.MathUtils.lerp(glassesRef.current.rotation.z, roll, 0.2)
+          const earVec = new THREE.Vector3(
+            rightEar.x - leftEar.x,
+            rightEar.y - leftEar.y,
+            rightEar.z - leftEar.z
           );
 
-          // ✅ Improved Scaling for Natural Fit
+          const faceVec = new THREE.Vector3(
+            chin.x - noseTip.x,
+            chin.y - noseTip.y,
+            chin.z - noseTip.z
+          );
+
+          const forward = new THREE.Vector3().crossVectors(earVec, faceVec).normalize();
+          const right = earVec.clone().normalize();
+          const up = new THREE.Vector3().crossVectors(forward, right).normalize();
+
+          const rotationMatrix = new THREE.Matrix4().makeBasis(right, up, forward);
+          const targetQuaternion = new THREE.Quaternion().setFromRotationMatrix(rotationMatrix);
+
+          glassesRef.current.quaternion.slerp(targetQuaternion, 0.2);
+
+          const eyeDistance = earVec.length();
           const targetScale = Math.max(Math.min(eyeDistance * 15, 4.5), 2.5);
           glassesRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.2);
+
+          glassesRef.current.visible = true;
+          setFaceDetected(true);
         });
 
         const camera = new Camera(videoRef.current, {
@@ -190,16 +205,15 @@ const CameraPage = () => {
   return (
     <div className="camera-container">
       <Navbar />
-
       {showPermissionPopup && (
         <div className="camera-popup">
           <div className="camera-popup-content">
             <h2>Enable Camera Access</h2>
-            <p>To experience our **Virtual Try-On**, we need access to your camera.</p>
+            <p>To experience our <strong>Virtual Try-On</strong>, we need access to your camera.</p>
             <div className="popup-guide">
               <div className="crosshair-mark">+</div>
               <p className="popup-text">
-                **Align your nose** with the **red cross** on the screen to get the most accurate fit.
+                <strong>Align your nose</strong> with the <strong>red cross</strong> on the screen to get the most accurate fit.
                 <br />Make sure your face is well-lit and centered.
               </p>
             </div>
@@ -210,7 +224,7 @@ const CameraPage = () => {
               }}>
                 Proceed
               </button>
-              <button onClick={() => navigate("/")}>Cancel</button> {/* ✅ Redirect to home */}
+              <button onClick={() => navigate("/")}>Cancel</button>
             </div>
           </div>
         </div>
@@ -218,7 +232,7 @@ const CameraPage = () => {
 
       {isCameraAllowed && (
         <div className="video-container">
-          <video ref={videoRef} className="video-stream" playsInline></video>
+          <video ref={videoRef} className="video-stream" playsInline autoPlay muted></video>
           <div ref={canvasRef} className="canvas-container"></div>
         </div>
       )}
