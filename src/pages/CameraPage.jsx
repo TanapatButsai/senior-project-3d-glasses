@@ -163,7 +163,7 @@ const CameraPage = () => {
 
           const faceVec = new THREE.Vector3(
             chin.x - noseTip.x,
-            chin.y - noseTip.y,
+            chin.y - noseTip.y + 0.4,
             chin.z - noseTip.z
           );
 
@@ -234,6 +234,7 @@ const CameraPage = () => {
         <div className="video-container">
           <video ref={videoRef} className="video-stream" playsInline autoPlay muted></video>
           <div ref={canvasRef} className="canvas-container"></div>
+          <div className="face-guide-box"></div>
         </div>
       )}
     </div>

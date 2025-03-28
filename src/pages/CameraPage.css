@@ -90,3 +90,15 @@
   z-index: 2; /* ✅ ให้ Canvas อยู่ด้านหน้าของวิดีโอ */
 }
 
+.face-guide-box {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 280px;
+  height: 340px;
+  transform: translate(-50%, -50%);
+  border: 2px solid red;
+  border-radius: 10px;
+  z-index: 10;
+  pointer-events: none; /* ป้องกันไม่ให้รบกวนคลิก */
+}
