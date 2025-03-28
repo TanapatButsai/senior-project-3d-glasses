@@ -31,6 +31,7 @@
 }
 
 .shop-container .model-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -74,6 +75,32 @@
 .shop-container .try-button:hover {
   background-color: #333;
 }
+
+/* ✅ ปุ่มหัวใจสำหรับ Favorite */
+.shop-container .favorite-icon {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: white;
+  border: none;
+  border-radius: 50%;
+  font-size: 18px;
+  padding: 5px 7px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  cursor: pointer;
+  transition: transform 0.2s ease, background-color 0.3s;
+  z-index: 2;
+}
+
+.shop-container .favorite-icon:hover {
+  transform: scale(1.15);
+  background-color: #ffe5ec; /* สีชมพูนิดๆ เวลา hover */
+}
+
+.shop-container .favorite-icon.filled {
+  color: red;
+}
+
 
 /* Responsive */
 @media screen and (max-width: 992px) {

@@ -167,6 +167,50 @@ app.delete("/models/:id", async (req, res) => {
   }
 });
 
+app.post("/favorites", async (req, res) => {
+  const { userId, glassesId } = req.body;
+  try {
+    await pool.query(
+      "INSERT INTO favorites (user_id, glasses_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+      [userId, glassesId]
+    );
+    res.json({ success: true, message: "Added to favorites." });
+  } catch (error) {
+    console.error("❌ Error adding favorite:", error);
+    res.status(500).json({ success: false, message: "Internal server error." });
+  }
+});
+
+app.delete("/favorites", async (req, res) => {
+  const { userId, glassesId } = req.body;
+  try {
+    await pool.query(
+      "DELETE FROM favorites WHERE user_id = $1 AND glasses_id = $2",
+      [userId, glassesId]
+    );
+    res.json({ success: true, message: "Removed from favorites." });
+  } catch (error) {
+    console.error("❌ Error removing favorite:", error);
+    res.status(500).json({ success: false, message: "Internal server error." });
+  }
+});
+
+app.get("/favorites/:userId", async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const result = await pool.query(
+      "SELECT glasses_id FROM favorites WHERE user_id = $1",
+      [userId]
+    );
+    const favoriteIds = result.rows.map(row => row.glasses_id);
+    res.json({ success: true, favorites: favoriteIds });
+  } catch (error) {
+    console.error("❌ Error fetching favorites:", error);
+    res.status(500).json({ success: false, message: "Internal server error." });
+  }
+});
+
+
 /* ===================================================
  ✅ STATIC FILES & SERVER CONFIGURATION
 =================================================== */

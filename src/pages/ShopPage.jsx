@@ -36,13 +36,42 @@ const ShopPage = () => {
 };
 
 const ModelCard = ({ model, navigate }) => {
+  const [user, setUser] = useState(null);
+  const [userFavorites, setUserFavorites] = useState([]);
+  const [isFavorite, setIsFavorite] = useState(false);
   const containerRef = useRef(null);
   let scene, camera, renderer;
-  let modelObject = null; // ✅ Define modelObject at the top
+  let modelObject = null;
+
+
+  
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(storedUser);
+  
+      // ✅ เรียก backend เพื่อดึงรายการ favorite ของ user
+      fetch(`http://localhost:5050/favorites/${storedUser}`)
+        .then(res => res.json())
+        .then(data => setUserFavorites(data.map(fav => fav.glasses_id)))
+        .catch(err => console.error("❌ Failed to fetch favorites:", err));
+    }
+  }, []);
+  
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    setUser(storedUser);
+
+    const favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
+    setIsFavorite(favorites.includes(model.glasses_id));
+  }, [model.glasses_id]);
 
   useEffect(() => {
     if (!containerRef.current) return;
 
+    const storedUser = localStorage.getItem("user");
+    setUser(storedUser); // <-- NEW
+    
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
     camera.position.set(0, 0, 5);
@@ -83,6 +112,7 @@ const ModelCard = ({ model, navigate }) => {
       }
     );
 
+
     return () => {
       if (renderer) {
         renderer.dispose();
@@ -98,6 +128,32 @@ const ModelCard = ({ model, navigate }) => {
     };
   }, [model.model_file]);
 
+
+  const handleToggleFavorite = async (glasses_id) => {
+    const isFav = userFavorites.includes(glasses_id);
+  
+    try {
+      if (isFav) {
+        await fetch(`http://localhost:5050/favorites`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id: user, glasses_id }),
+        });
+        setUserFavorites(prev => prev.filter(id => id !== glasses_id));
+      } else {
+        await fetch(`http://localhost:5050/favorites`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id: user, glasses_id }),
+        });
+        setUserFavorites(prev => [...prev, glasses_id]);
+      }
+    } catch (err) {
+      console.error("❌ Favorite toggle failed:", err);
+    }
+  };
+  
+  
   // ✅ Hover Effects (Spin Animation) - Added Safeguard
   const handleMouseEnter = () => {
     if (!modelObject) return; // ✅ Ensure modelObject exists
@@ -158,14 +214,31 @@ const handleTry = async () => {
   // ✅ ส่งไปที่ Camera Page
   navigate("/camera", { state: { selectedModel: model } });
 };
+// const isFavorite = userFavorites.includes(model.glasses_id);
 
 
 
-  return (
-    <div className="model-card" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+return (
+    <div
+      className="model-card"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      {/* ❤️ ปุ่มหัวใจ (แสดงเฉพาะเมื่อมี user) */}
+      {user && (
+        <button
+          className={`favorite-icon ${isFavorite ? "filled" : ""}`}
+          onClick={() => handleToggleFavorite(model.glasses_id)}
+        >
+          ❤️
+        </button>
+      )}
+
       <div ref={containerRef} className="model-view"></div>
       <p className="model-name">{model.name}</p>
-      <button className="try-button" onClick={handleTry}>TRY</button>
+      <button className="try-button" onClick={handleTry}>
+        TRY
+      </button>
     </div>
   );
 };

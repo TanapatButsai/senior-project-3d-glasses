@@ -5,7 +5,8 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import * as THREE from "three";
 import Navbar from "../components/Navbar";
 import "./CameraPage.css";
-import { useNavigate, useLocation } from "react-router-dom"; // ✅ Import useNavigate
+import { useNavigate, useLocation } from "react-router-dom"; 
+
 const CameraPage = () => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -17,7 +18,7 @@ const CameraPage = () => {
   const [faceDetected, setFaceDetected] = useState(false);
   const [showPermissionPopup, setShowPermissionPopup] = useState(true);
   const [isCameraAllowed, setIsCameraAllowed] = useState(false);
-  const navigate = useNavigate(); // ✅ Initialize navigate
+  const navigate = useNavigate();
   const location = useLocation();
   const selectedModel = location.state?.selectedModel || null;
   
@@ -44,24 +45,17 @@ const CameraPage = () => {
         console.error("Failed to load model:", error);
       }
     );
-      // ✅ Create "+" Mark using simple lines
+
+    // ✅ Add a Crosshair for Face Alignment
     const lineMaterial = new THREE.LineBasicMaterial({ color: 0xff0000, linewidth: 2 });
-    
     const crossShape = new THREE.BufferGeometry();
     const vertices = new Float32Array([
-      // Horizontal line
-      -0.2, 0, 0,
-      0.2, 0, 0,
-      // Vertical line
-      0, -0.2, 0,
-      0,  0.2, 0
+      -0.2, 0, 0, 0.2, 0, 0, // Horizontal line
+      0, -0.2, 0, 0, 0.2, 0  // Vertical line
     ]);
-
     crossShape.setAttribute("position", new THREE.BufferAttribute(vertices, 3));
-  
     const crossLine = new THREE.LineSegments(crossShape, lineMaterial);
-    crossLine.position.set(0, 0.5, -4.5); // ✅ Slightly above the nose (Y-axis)
-    
+    crossLine.position.set(0, 0.5, -4.5);
     scene.add(crossLine);
   };
 
@@ -147,7 +141,7 @@ const CameraPage = () => {
             Math.pow(rightEye.z - leftEye.z, 2)
           );
 
-          // ✅ Adjust Glasses Position
+          // ✅ Adjustments for Stability
           const noseX = -(noseTip.x - 0.5) * 10;
           const noseY = -(midY - 0.5) * 10 + 0.5;
           const noseZ = -5;
@@ -158,21 +152,21 @@ const CameraPage = () => {
             THREE.MathUtils.lerp(glassesRef.current.position.z, noseZ, 0.2)
           );
 
-          // ✅ Improved Yaw (Turning Left & Right)
-          const yaw = Math.atan2(rightEar.y - leftEar.y, rightEar.x - leftEar.x) * 2.0; // Increased sensitivity
-          const stableMidY = (leftEye.y + rightEye.y + landmarks[152].y) / 3; // คำนวณจาก 3 จุด
-          const pitch = Math.atan2(noseTip.y - stableMidY, eyeDistance) * 0.6;
-          const roll = -yaw * 0.6; // Adjust roll factor
+          // ✅ Improved Rotation Stability
+          const yaw = Math.atan2(rightEar.y - leftEar.y, rightEar.x - leftEar.x) * 1.2;
+          const stableMidY = (leftEye.y + rightEye.y + landmarks[152].y * 2) / 4;
+          const pitch = Math.atan2(noseTip.y - stableMidY, eyeDistance) * 0.5;
+          const roll = -yaw * 0.4;
 
           glassesRef.current.rotation.set(
             THREE.MathUtils.lerp(glassesRef.current.rotation.x, pitch, 0.2),
-            THREE.MathUtils.lerp(glassesRef.current.rotation.y, yaw, 0.3), // Faster turning
-            THREE.MathUtils.lerp(glassesRef.current.rotation.z, roll,  0.2)
+            THREE.MathUtils.lerp(glassesRef.current.rotation.y, yaw, 0.3),
+            THREE.MathUtils.lerp(glassesRef.current.rotation.z, roll, 0.2)
           );
 
-          // ✅ Improved Glasses Scaling
-          const glassesScale = Math.max(Math.min(eyeDistance * 18, 5), 2);
-          glassesRef.current.scale.set(glassesScale, glassesScale, glassesScale);
+          // ✅ Improved Scaling for Natural Fit
+          const targetScale = Math.max(Math.min(eyeDistance * 15, 4.5), 2.5);
+          glassesRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.2);
         });
 
         const camera = new Camera(videoRef.current, {
