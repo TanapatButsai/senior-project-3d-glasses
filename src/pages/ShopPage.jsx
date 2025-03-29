@@ -53,7 +53,14 @@ const ModelCard = ({ model, navigate }) => {
       // ✅ เรียก backend เพื่อดึงรายการ favorite ของ user
       fetch(`http://localhost:5050/favorites/${storedUser}`)
         .then(res => res.json())
-        .then(data => setUserFavorites(data.map(fav => fav.glasses_id)))
+        .then(data => {
+          if (data.success && Array.isArray(data.favorites)) {
+            setUserFavorites(data.favorites);
+          } else {
+            console.warn("⚠️ Unexpected favorites response:", data);
+          }
+        })
+        
         .catch(err => console.error("❌ Failed to fetch favorites:", err));
     }
   }, []);

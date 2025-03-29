@@ -125,9 +125,9 @@ const CameraPage = () => {
             prevLandmarks.current = landmarks.map(p => ({ ...p }));
           } else {
             landmarks.forEach((pt, i) => {
-              prevLandmarks.current[i].x = THREE.MathUtils.lerp(prevLandmarks.current[i].x, pt.x, 0.2);
-              prevLandmarks.current[i].y = THREE.MathUtils.lerp(prevLandmarks.current[i].y, pt.y, 0.2);
-              prevLandmarks.current[i].z = THREE.MathUtils.lerp(prevLandmarks.current[i].z, pt.z, 0.2);
+              prevLandmarks.current[i].x = THREE.MathUtils.lerp(prevLandmarks.current[i].x, pt.x, 1);
+              prevLandmarks.current[i].y = THREE.MathUtils.lerp(prevLandmarks.current[i].y, pt.y, 1);
+              prevLandmarks.current[i].z = THREE.MathUtils.lerp(prevLandmarks.current[i].z, pt.z, 1);
             });
           }
 
