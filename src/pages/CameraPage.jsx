@@ -213,9 +213,9 @@ const CameraPage = () => {
             <div className="popup-guide">
               <div className="crosshair-mark">+</div>
               <p className="popup-text">
-                <strong>Align your nose</strong> with the <strong>red cross</strong> on the screen to get the most accurate fit.
-                <br />Make sure your face is well-lit and centered.
-              </p>
+              <strong>Align the area between your eyes</strong> with the <strong>red cross</strong> on the screen for best accuracy.
+              <br />Ensure your face is centered and well-lit.
+            </p>
             </div>
             <div className="popup-buttons">
               <button onClick={() => {

@@ -41,9 +41,8 @@ const ModelCard = ({ model, navigate }) => {
   const [isFavorite, setIsFavorite] = useState(false);
   const containerRef = useRef(null);
   let scene, camera, renderer;
-  let modelObject = null;
-
-
+  const modelObject = useRef(null);
+  const spinIntervalRef = useRef(null);
   
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -94,16 +93,17 @@ const ModelCard = ({ model, navigate }) => {
     loader.load(
       modelURL,
       (gltf) => {
-        if (modelObject) {
+        if (modelObject.current) {
           scene.remove(modelObject);
         }
 
-        modelObject = gltf.scene;
-        modelObject.scale.set(2, 2, 2);
-        modelObject.position.set(0, -0.5, 0);
-        modelObject.rotation.set(0, 0, 0);
+        modelObject.current = gltf.scene;
 
-        scene.add(modelObject);
+        modelObject.current.scale.set(2, 2, 2);
+        modelObject.current.position.set(0, -0.5, 0);
+        modelObject.current.rotation.set(0, 0, 0);
+
+        scene.add(modelObject.current);
 
         const animate = () => {
           requestAnimationFrame(animate);
@@ -169,39 +169,39 @@ const ModelCard = ({ model, navigate }) => {
   };
   
   
-  
-  // ✅ Hover Effects (Spin Animation) - Added Safeguard
   const handleMouseEnter = () => {
-    if (!modelObject) return; // ✅ Ensure modelObject exists
-    if (!containerRef.current.spinInterval) {
-      containerRef.current.spinInterval = setInterval(() => {
-        modelObject.rotation.y += 0.05;
+    if (!modelObject.current) return; // ✅ Ensure modelObject exists
+    if (!spinIntervalRef.current) {
+      spinIntervalRef.current = setInterval(() => {
+        if (modelObject.current) {
+          modelObject.current.rotation.y += 0.05;
+        }
       }, 30);
     }
+    
   };
 
   const handleMouseLeave = () => {
-    if (!modelObject) return; // ✅ Ensure modelObject exists
-    clearInterval(containerRef.current.spinInterval);
-    containerRef.current.spinInterval = null;
+    if (!modelObject.current) return; // ✅ Ensure modelObject exists
+    clearInterval(spinIntervalRef.current);
+    spinIntervalRef.current = null;
+
 
     const targetRotation = 0;
     const animateReturn = () => {
-      if (!modelObject) return;
-      modelObject.rotation.y = THREE.MathUtils.lerp(
-        modelObject.rotation.y,
+      if (!modelObject.current) return;
+        modelObject.current.rotation.y = THREE.MathUtils.lerp(
+        modelObject.current.rotation.y,
         targetRotation,
         0.1
       );
-      if (Math.abs(modelObject.rotation.y - targetRotation) > 0.01) {
+      if (Math.abs(modelObject.current.rotation.y - targetRotation) > 0.01) {
         requestAnimationFrame(animateReturn);
       }
     };
     animateReturn();
   };
 
-  // ✅ Navigate to CameraPage with glasses_id only
-// ✅ Navigate to CameraPage with full model data
 const handleTry = async () => {
   if (!model) {
     console.error("❌ No model data available to send!");
