@@ -75,36 +75,44 @@ const ModelCard = ({ model, navigate }) => {
 
   useEffect(() => {
     if (!containerRef.current) return;
-
-    const storedUser = localStorage.getItem("user");
-    setUser(storedUser); // <-- NEW
-    
+  
+    // ล้าง DOM เก่าใน containerRef ก่อน (สำคัญ!)
+    containerRef.current.innerHTML = "";
+  
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
     camera.position.set(0, 0, 5);
-
+  
     renderer = new THREE.WebGLRenderer({ alpha: true });
     renderer.setSize(200, 200);
     containerRef.current.appendChild(renderer.domElement);
-
+  
     const loader = new GLTFLoader();
     const modelURL = `http://localhost:5050/models/${model.model_file}`;
-
+  
     loader.load(
       modelURL,
       (gltf) => {
+        // ลบโมเดลเก่าถ้ามี
         if (modelObject.current) {
-          scene.remove(modelObject);
+          scene.remove(modelObject.current);
+          modelObject.current.traverse((child) => {
+            if (child.isMesh) {
+              child.geometry.dispose();
+              if (child.material.isMaterial) {
+                child.material.dispose();
+              }
+            }
+          });
         }
-
+  
         modelObject.current = gltf.scene;
-
         modelObject.current.scale.set(2, 2, 2);
         modelObject.current.position.set(0, -0.5, 0);
         modelObject.current.rotation.set(0, 0, 0);
-
+  
         scene.add(modelObject.current);
-
+  
         const animate = () => {
           requestAnimationFrame(animate);
           renderer.render(scene, camera);
@@ -119,22 +127,22 @@ const ModelCard = ({ model, navigate }) => {
         }
       }
     );
-
-
+  
     return () => {
       if (renderer) {
         renderer.dispose();
+        renderer.forceContextLoss?.();
       }
-      if (scene) {
-        while (scene.children.length > 0) {
-          scene.remove(scene.children[0]);
-        }
+      if (scene && modelObject.current) {
+        scene.remove(modelObject.current);
       }
+      modelObject.current = null;
       if (containerRef.current) {
         containerRef.current.innerHTML = "";
       }
     };
   }, [model.model_file]);
+  
 
 
   const handleToggleFavorite = async (glasses_id) => {
@@ -178,15 +186,12 @@ const ModelCard = ({ model, navigate }) => {
         }
       }, 30);
     }
-    
   };
 
   const handleMouseLeave = () => {
     if (!modelObject.current) return; // ✅ Ensure modelObject exists
     clearInterval(spinIntervalRef.current);
     spinIntervalRef.current = null;
-
-
     const targetRotation = 0;
     const animateReturn = () => {
       if (!modelObject.current) return;
