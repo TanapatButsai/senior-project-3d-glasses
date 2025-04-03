@@ -218,15 +218,7 @@ const ModelCard = ({ model, onDelete,onEdit }) => {
       animateReturn();
     }
   };
-    const handleEditModel = (model) => {
-      setEditModel(model);
-      setEditedName(model.name);
-      setEditedType(model.type);
-    };
-    
-    // 📌 ยกเลิกการแก้ไข
-
-    
+  
   return (
     <div className="model-management-card">
       <div

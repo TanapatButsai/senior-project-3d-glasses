@@ -100,7 +100,13 @@
 .shop-container .favorite-icon.filled {
   color: red;
 }
+.shop-container .favorite-icon.red {
+  color: red;
+}
 
+.shop-container .favorite-icon.black {
+  color: black;
+}
 
 /* Responsive */
 @media screen and (max-width: 992px) {

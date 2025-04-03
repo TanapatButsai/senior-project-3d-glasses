@@ -47,11 +47,11 @@ const ModelCard = ({ model, navigate }) => {
   
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
-    if (storedUser) {
+    const userId = localStorage.getItem("user_id");
+    if (storedUser && userId) {
       setUser(storedUser);
   
-      // ✅ เรียก backend เพื่อดึงรายการ favorite ของ user
-      fetch(`http://localhost:5050/favorites/${storedUser}`)
+      fetch(`http://localhost:5050/favorites/${userId}`)
         .then(res => res.json())
         .then(data => {
           if (data.success && Array.isArray(data.favorites)) {
@@ -64,6 +64,7 @@ const ModelCard = ({ model, navigate }) => {
         .catch(err => console.error("❌ Failed to fetch favorites:", err));
     }
   }, []);
+  
   
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -137,6 +138,13 @@ const ModelCard = ({ model, navigate }) => {
 
 
   const handleToggleFavorite = async (glasses_id) => {
+    const user_id = localStorage.getItem("user_id"); // ✅ ดึง UUID ที่ถูกต้อง
+  
+    if (!user_id) {
+      console.error("❌ No user_id found in localStorage.");
+      return;
+    }
+  
     const isFav = userFavorites.includes(glasses_id);
   
     try {
@@ -144,14 +152,14 @@ const ModelCard = ({ model, navigate }) => {
         await fetch(`http://localhost:5050/favorites`, {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user_id: user, glasses_id }),
+          body: JSON.stringify({ user_id, glasses_id }),
         });
         setUserFavorites(prev => prev.filter(id => id !== glasses_id));
       } else {
         await fetch(`http://localhost:5050/favorites`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user_id: user, glasses_id }),
+          body: JSON.stringify({ user_id, glasses_id }),
         });
         setUserFavorites(prev => [...prev, glasses_id]);
       }
@@ -159,6 +167,7 @@ const ModelCard = ({ model, navigate }) => {
       console.error("❌ Favorite toggle failed:", err);
     }
   };
+  
   
   
   // ✅ Hover Effects (Spin Animation) - Added Safeguard
@@ -231,13 +240,12 @@ return (
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* ❤️ ปุ่มหัวใจ (แสดงเฉพาะเมื่อมี user) */}
       {user && (
         <button
-          className={`favorite-icon ${isFavorite ? "filled" : ""}`}
+          className="favorite-icon"
           onClick={() => handleToggleFavorite(model.glasses_id)}
         >
-          ❤️
+          {userFavorites.includes(model.glasses_id) ? "❤️" : "🖤"}
         </button>
       )}
 

@@ -33,6 +33,7 @@ const AuthorizationPage = () => {
       if (response.data.token) {
         localStorage.setItem("token", response.data.token);
         const userName = isSignUp ? name : response.data.name || email.split("@")[0]; 
+        localStorage.setItem("user_id", response.data.userId); // ✅ ใช้ UUID แทนชื่อ
         localStorage.setItem("user", userName);
       }
   

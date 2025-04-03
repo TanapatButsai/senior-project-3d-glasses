@@ -13,34 +13,28 @@ const app = express();
 const PORT = process.env.PORT || 5050;
 const saltRounds = 10;
 
-// ✅ Ensure `JWT_SECRET` is set
 const jwtSecret = process.env.JWT_SECRET;
 if (!jwtSecret) {
   console.error("❌ ERROR: JWT_SECRET is missing in .env file!");
-  process.exit(1); // Stop the server if secret key is not set
+  process.exit(1);
 }
 
 app.use(cors());
 app.use(express.json());
 
-// ✅ PostgreSQL Database Configuration
 const pool = new Pool({
   user: process.env.POSTGRES_USER || "postgres",
   host: process.env.POSTGRES_HOST || "localhost",
   database: process.env.POSTGRES_DB || "glasses_try_on",
-//   password: process.env.POSTGRES_PASSWORD || "postgresql",
   password: process.env.POSTGRES_PASSWORD || "yourpassword",
-
   port: process.env.POSTGRES_PORT || 5432,
 });
 
-// ✅ Ensure 'uploads' directory exists
 const UPLOADS_DIR = path.join(__dirname, "uploads");
 if (!fs.existsSync(UPLOADS_DIR)) {
   fs.mkdirSync(UPLOADS_DIR);
 }
 
-// ✅ Multer Configuration for File Uploads
 const storage = multer.diskStorage({
   destination: UPLOADS_DIR,
   filename: (req, file, cb) => {
@@ -50,17 +44,11 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-/* ===================================================
- ✅ USER AUTHENTICATION ROUTES
-=================================================== */
-
-// ✅ User Sign-Up
 app.post("/auth/signup", async (req, res) => {
   const { name, email, password } = req.body;
 
   try {
     const userExists = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
-
     if (userExists.rows.length > 0) {
       return res.status(400).json({ message: "Email already in use." });
     }
@@ -78,13 +66,11 @@ app.post("/auth/signup", async (req, res) => {
   }
 });
 
-// ✅ User Sign-In
 app.post("/auth/signin", async (req, res) => {
   const { email, password } = req.body;
 
   try {
     const user = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
-
     if (user.rows.length === 0) {
       return res.status(400).json({ message: "Invalid email or password." });
     }
@@ -98,18 +84,13 @@ app.post("/auth/signin", async (req, res) => {
       expiresIn: "1h",
     });
 
-    res.json({ message: "Login successful", token });
+    res.json({ message: "Login successful", token, userId: user.rows[0].user_id });
   } catch (error) {
     console.error("Error during sign-in:", error);
     res.status(500).json({ message: "Internal server error." });
   }
 });
 
-/* ===================================================
- ✅ MODEL MANAGEMENT ROUTES
-=================================================== */
-
-// ✅ Upload a 3D Model
 app.post("/upload", upload.single("file"), async (req, res) => {
   const { file } = req;
   const { modelName, type } = req.body;
@@ -130,7 +111,6 @@ app.post("/upload", upload.single("file"), async (req, res) => {
   }
 });
 
-// ✅ Get All Models (Sorted by try_count DESC)
 app.get("/models", async (req, res) => {
   try {
     const result = await pool.query(
@@ -148,8 +128,6 @@ app.get("/models", async (req, res) => {
   }
 });
 
-
-// ✅ Delete a Model
 app.delete("/models/:id", async (req, res) => {
   const { id } = req.params;
 
@@ -168,11 +146,15 @@ app.delete("/models/:id", async (req, res) => {
 });
 
 app.post("/favorites", async (req, res) => {
-  const { userId, glassesId } = req.body;
+  const { user_id, glasses_id } = req.body;
+  if (!user_id || !glasses_id) {
+    return res.status(400).json({ success: false, message: "Missing user_id or glasses_id" });
+  }
+
   try {
     await pool.query(
       "INSERT INTO favorites (user_id, glasses_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
-      [userId, glassesId]
+      [user_id, glasses_id]
     );
     res.json({ success: true, message: "Added to favorites." });
   } catch (error) {
@@ -182,11 +164,15 @@ app.post("/favorites", async (req, res) => {
 });
 
 app.delete("/favorites", async (req, res) => {
-  const { userId, glassesId } = req.body;
+  const { user_id, glasses_id } = req.body;
+  if (!user_id || !glasses_id) {
+    return res.status(400).json({ success: false, message: "Missing user_id or glasses_id" });
+  }
+
   try {
     await pool.query(
       "DELETE FROM favorites WHERE user_id = $1 AND glasses_id = $2",
-      [userId, glassesId]
+      [user_id, glasses_id]
     );
     res.json({ success: true, message: "Removed from favorites." });
   } catch (error) {
@@ -210,17 +196,8 @@ app.get("/favorites/:userId", async (req, res) => {
   }
 });
 
-
-/* ===================================================
- ✅ STATIC FILES & SERVER CONFIGURATION
-=================================================== */
-
-// ✅ Serve Uploaded Models
-// ✅ Serve Uploaded 3D Model Files Correctly
 app.use("/models", express.static(path.join(__dirname, "uploads")));
 
-
-// ✅ Start Server
 app.listen(PORT, () => {
   console.log(`✅ Backend running at http://localhost:${PORT}`);
 });
@@ -230,38 +207,38 @@ app.put("/models/:id", async (req, res) => {
   const { name, type } = req.body;
 
   try {
-      const result = await pool.query(
-          "UPDATE glasses SET name = $1, type = $2, updated_at = NOW() WHERE glasses_id = $3 RETURNING *",
-          [name, type, id]
-      );
+    const result = await pool.query(
+      "UPDATE glasses SET name = $1, type = $2, updated_at = NOW() WHERE glasses_id = $3 RETURNING *",
+      [name, type, id]
+    );
 
-      if (result.rows.length === 0) {
-          return res.status(404).json({ message: "Model not found" });
-      }
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Model not found" });
+    }
 
-      res.json({ message: "Model updated successfully!", model: result.rows[0] });
+    res.json({ message: "Model updated successfully!", model: result.rows[0] });
   } catch (error) {
-      console.error("Error updating model:", error);
-      res.status(500).json({ message: "Internal server error" });
+    console.error("Error updating model:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
-// ✅ Increment try_count for glasses
+
 app.post("/models/increment-try/:id", async (req, res) => {
   const { id } = req.params;
 
   try {
-      const result = await pool.query(
-          "UPDATE glasses SET try_count = try_count + 1 WHERE glasses_id = $1 RETURNING try_count",
-          [id]
-      );
+    const result = await pool.query(
+      "UPDATE glasses SET try_count = try_count + 1 WHERE glasses_id = $1 RETURNING try_count",
+      [id]
+    );
 
-      if (result.rowCount === 0) {
-          return res.status(404).json({ success: false, message: "Glasses not found" });
-      }
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, message: "Glasses not found" });
+    }
 
-      res.json({ success: true, try_count: result.rows[0].try_count });
+    res.json({ success: true, try_count: result.rows[0].try_count });
   } catch (error) {
-      console.error("❌ Error updating try_count:", error);
-      res.status(500).json({ success: false, message: "Internal server error." });
+    console.error("❌ Error updating try_count:", error);
+    res.status(500).json({ success: false, message: "Internal server error." });
   }
 });
