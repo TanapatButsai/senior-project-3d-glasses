@@ -131,46 +131,69 @@
   
   /* 📌 Popup Box */
   .edit-popup-content {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
-    text-align: center;
-    width: 350px;
+    background: #ffffff;
+    padding: 30px 25px;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    text-align: left;
+    width: 400px;
+    max-width: 90%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    font-family: 'Segoe UI', sans-serif;
   }
   
   /* 📌 Input Fields */
   .edit-popup-content input,
   .edit-popup-content select {
-    width: 100%;
-    padding: 8px;
-    margin-top: 10px;
-    margin-bottom: 15px;
+    width: 95%;
+    padding: 10px 12px;
+    font-size: 15px;
+    background-color: #f9f9f9;
+    color: #333;
     border: 1px solid #ccc;
-    border-radius: 5px;
+    border-radius: 8px;
+    outline: none;
+    transition: 0.2s;
   }
   
+.edit-popup-content input:focus,
+.edit-popup-content select:focus {
+  border-color: #1e88e5;
+  background-color: #fff;
+}
   /* 📌 Buttons */
   .popup-buttons {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  
+
+  .save-btn,
+  .cancel-btn {
+    padding: 10px 16px;
+    font-size: 15px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: 0.2s;
   }
   
   .save-btn {
     background-color: #1e88e5;
     color: white;
-    padding: 8px 12px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
   }
-  
+  .save-btn:hover {
+    background-color: #1565c0;
+  }  
   .cancel-btn {
-    background-color: #f44336;
+    background-color: #e53935;
     color: white;
-    padding: 8px 12px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
+  }
+  .cancel-btn:hover {
+    background-color: #c62828;
   }
   
