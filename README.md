@@ -114,6 +114,7 @@ New users can register to create an account. However, users who choose not to re
 > To access admin features, you must log in with the following credentials:  
 > **Email:** `admin@gmail.com`  
 > **Password:** `123456`
+
 ![image](https://github.com/user-attachments/assets/1ca769ed-8872-414b-845d-1355b345375c)
 *Figure Registration interface*
 
@@ -122,6 +123,7 @@ New users can register to create an account. However, users who choose not to re
 Both users and administrators can log in through the login page. The system will identify the role of the user, and each role will have its own separate interface and privileges.
 
 > ✅ Make sure to use `admin@gmail.com` with password `123456` to log in as an **Admin**.
+
 ![image](https://github.com/user-attachments/assets/35f79e41-ef72-4c9b-a24e-1e35d3844860)
 *Figure Login interface*
 
@@ -136,8 +138,10 @@ This interface allows admins to edit or delete glasses models, categorize them, 
 
 ![image](https://github.com/user-attachments/assets/6308dcbb-bc34-4191-bb6e-7c6baade2853)
 *Figure Glasses management interface*
+
 ![image](https://github.com/user-attachments/assets/24e4f8de-1eba-4984-bf76-cc81e70dc3f6)
 *Figure Edit glasses information interface*
+
 ![image](https://github.com/user-attachments/assets/f9c19fb4-2f99-4f99-a64f-48e042bf2c56)
 *Figure Delete glasses model interface*
 
@@ -146,11 +150,13 @@ All users can browse available glasses models and preview them. Logged-in users 
 
 ![image](https://github.com/user-attachments/assets/2fad23cd-451e-434c-a412-6a0e93ef8b77)
 *Figure Browsing interface for guests*
+
 ![image](https://github.com/user-attachments/assets/a01a26c3-c16a-4495-a3bc-9b8108b12b35)
 *Figure Browsing interface for logged-in users*
 
 7. Try-On Glasses (User)
 The system displays virtual glasses on the user's face in real-time using their webcam.
+
 ![image](https://github.com/user-attachments/assets/46a83e7c-a932-495f-8626-f546b25fb64b)
 *Figure Virtual try-on interface*
 
