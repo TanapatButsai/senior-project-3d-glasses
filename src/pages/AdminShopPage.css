@@ -1,0 +1,122 @@
+.shop-container body, .shop-container html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #fff;
+  overflow: auto; /* ✅ ป้องกันการถูกบีบ */
+}
+
+.shop-container {
+  text-align: center;
+  padding-top: 80px; /* ✅ ปรับค่าตามที่ต้องการ */
+  margin-top: 000;
+  width: 100vw;
+  background-color: #fff;
+  min-height: 100vh; /* ✅ ป้องกันการถูกตัดขอบ */
+  display: flex;
+  flex-direction: column;
+}
+
+.shop-container .grid-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  justify-content: center;
+  align-items: start; /* ✅ เปลี่ยนจาก center เป็น start */
+  padding: 20px;
+  width: 100%;
+  flex-grow: 1; /* ✅ ทำให้ container เต็มพื้นที่ */
+  overflow-y: auto; /* ✅ ให้เลื่อนลงได้ถ้าจอล้น */
+}
+
+.shop-container .model-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.1);
+  padding: 15px;
+  transition: transform 0.3s ease-in-out;
+  width: 90%;
+}
+
+.shop-container .model-card:hover {
+  transform: scale(1.05);
+}
+
+.shop-container .model-view {
+  width: 200px;
+  height: 200px;
+}
+
+.shop-container .model-name {
+  margin-top: 10px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
+}
+
+/* ✅ ปุ่ม TRY */
+.shop-container .try-button {
+  margin-top: 10px;
+  background-color: black;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: 0.3s ease-in-out;
+}
+
+.shop-container .try-button:hover {
+  background-color: #333;
+}
+
+/* ✅ ปุ่มหัวใจสำหรับ Favorite */
+.shop-container .favorite-icon {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: white;
+  border: none;
+  border-radius: 50%;
+  font-size: 18px;
+  padding: 5px 7px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  cursor: pointer;
+  transition: transform 0.2s ease, background-color 0.3s;
+  z-index: 2;
+}
+
+.shop-container .favorite-icon:hover {
+  transform: scale(1.15);
+  background-color: #ffe5ec; /* สีชมพูนิดๆ เวลา hover */
+}
+
+.shop-container .favorite-icon.filled {
+  color: red;
+}
+.shop-container .favorite-icon.red {
+  color: red;
+}
+
+.shop-container .favorite-icon.black {
+  color: black;
+}
+
+/* Responsive */
+@media screen and (max-width: 992px) {
+  .shop-container .grid-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .shop-container .grid-container {
+    grid-template-columns: repeat(1, 1fr);
+  }
+}

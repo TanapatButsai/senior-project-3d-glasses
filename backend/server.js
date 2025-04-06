@@ -1,3 +1,8 @@
+/**
+ * Licensed under the Apache License, Version 2.0
+ * Additional restrictions apply – see LICENSE file for details.
+ * Attribution: Computer Science Department, Faculty of Science, Kasetsart University
+ */
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");

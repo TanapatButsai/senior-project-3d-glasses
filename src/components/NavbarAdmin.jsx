@@ -17,6 +17,9 @@ const NavbarAdmin = () => {
       {/* ✅ Navigation Links */}
       <nav>
         <ul className="nav-links">
+        <li onClick={() => navigate("/shop-admin")} className="nav-button">
+            Try On Glasses
+          </li>
           <li onClick={() => navigate("/model-management")} className="nav-button">
             Manage Models
           </li>

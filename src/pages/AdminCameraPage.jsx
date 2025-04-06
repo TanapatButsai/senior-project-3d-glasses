@@ -8,7 +8,7 @@ import { FaceMesh } from "@mediapipe/face_mesh";
 import { Camera } from "@mediapipe/camera_utils";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import * as THREE from "three";
-import Navbar from "../components/Navbar";
+import NavbarAdmin from "../components/NavbarAdmin";
 import "./CameraPage.css";
 import { useNavigate, useLocation } from "react-router-dom"; 
 
@@ -209,7 +209,7 @@ const CameraPage = () => {
 
   return (
     <div className="camera-container">
-      <Navbar />
+      <NavbarAdmin />
       {showPermissionPopup && (
         <div className="camera-popup">
           <div className="camera-popup-content">
@@ -229,7 +229,7 @@ const CameraPage = () => {
               }}>
                 Proceed
               </button>
-              <button onClick={() => navigate("/")}>Cancel</button>
+              <button onClick={() => navigate("/admin")}>Cancel</button>
             </div>
           </div>
         </div>

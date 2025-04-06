@@ -37,7 +37,7 @@ const AdminPage = () => {
           </div>
 
           <motion.button 
-            onClick={() => navigate("/camera")} 
+            onClick={() => navigate("/shop-admin")} 
             className="cta-button"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}

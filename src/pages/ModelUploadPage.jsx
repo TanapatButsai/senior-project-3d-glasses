@@ -5,6 +5,7 @@ import NavbarAdmin from "../components/NavbarAdmin";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import "./ModelUploadPage.css";
+import { useNavigate } from "react-router-dom"; // 👈 NEW
 
 const ModelUploadPage = () => {
   const [modelName, setModelName] = useState("");
@@ -16,9 +17,12 @@ const ModelUploadPage = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const modelViewerRef = useRef(null);
   const threeSceneRef = useRef(null);
-
+  const navigate = useNavigate();
   const handleNameChange = (e) => setModelName(e.target.value);
   const handleTypeChange = (e) => setModelType(e.target.value);
+  const [showNameError, setShowNameError] = useState(false);
+  const [showTypeError, setShowTypeError] = useState(false);
+  const [showFileError, setShowFileError] = useState(false);
 
   const handleFileChange = (e) => {
     const uploadedFile = e.target.files[0];
@@ -38,19 +42,18 @@ const ModelUploadPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!modelName || !modelType || !file) {
-      setMessage("All fields are required: Model name, type, and file.");
-      setShowSuccessModal(true);
-      return;
-    }
+    const nameMissing = !modelName;
+    const typeMissing = !modelType;
+    const fileMissing = !file;
+    setShowNameError(nameMissing);
+    setShowTypeError(typeMissing);
+    setShowFileError(fileMissing);
 
-    // ✅ Extra validation before showing confirm modal
-    if (file.name.split('.').pop().toLowerCase() !== "glb") {
-      setMessage("Invalid file type! Please select a .glb file.");
-      setShowSuccessModal(true);
-      return;
-    }
-
+  if (nameMissing || typeMissing || fileMissing) {
+    setMessage("All fields are required: Model name, type, and file.");
+    setShowSuccessModal(true);
+    return;
+  }
     setShowConfirmModal(true);
   };
 
@@ -73,6 +76,7 @@ const ModelUploadPage = () => {
         setModelType("");
         setFile(null);
         setFileName("No file chosen");
+        navigate("/model-management");
       } else {
         setMessage(result.message || "Failed to upload model.");
       }
@@ -170,9 +174,11 @@ const ModelUploadPage = () => {
             accept=".glb"
             className="form-input file-input"
           />
-          <p className="file-name">Selected File: {fileName}</p>
+          {showNameError && <p className="red-text">Please enter a model name.</p>}
+          {showTypeError && <p className="red-text">Please select a model type.</p>}
+          {showFileError && <p className="red-text">Please select a .glb file to upload.</p>}
 
-          <button type="submit" className="upload-button small-button">Upload</button>
+          <button type="submit" className="upload-button small-button" >Upload</button>
         </form>
       </div>
 

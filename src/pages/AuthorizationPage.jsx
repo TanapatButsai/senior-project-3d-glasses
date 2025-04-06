@@ -16,14 +16,25 @@ const AuthorizationPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // ✅ ตรวจสอบว่าถ้าเป็น admin ให้ redirect ไป /admin ทันที
+  
+    if (!email || !password || (isSignUp && !name)) {
+      setMessage("กรุณากรอกข้อมูลให้ครบถ้วน");
+      setShowModal(true);
+      return;
+    }
+  
+    if (isSignUp && password.length < 6) {
+      setMessage("รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร");
+      setShowModal(true);
+      return;
+    }
+  
     if (email === "admin@gmail.com" && password === "123456") {
       localStorage.setItem("user", "Admin");
       navigate("/admin");
       return;
     }
-
+  
     const url = isSignUp ? "http://localhost:5050/auth/signup" : "http://localhost:5050/auth/signin";
     const payload = isSignUp ? { name, email, password } : { email, password };
   
@@ -32,9 +43,8 @@ const AuthorizationPage = () => {
   
       if (response.data.token) {
         localStorage.setItem("token", response.data.token);
-        const userName = isSignUp ? name : response.data.name || email.split("@")[0]; 
-        localStorage.setItem("user_id", response.data.userId); // ✅ ใช้ UUID แทนชื่อ
-        localStorage.setItem("user", userName);
+        localStorage.setItem("user_id", response.data.userId);
+        localStorage.setItem("user", isSignUp ? name : response.data.name || email.split("@")[0]);
       }
   
       setMessage(response.data.message);
@@ -45,10 +55,16 @@ const AuthorizationPage = () => {
         navigate("/");
       }, 2000);
     } catch (error) {
-      setMessage(error.response?.data?.message || "An error occurred.");
+      // กรณี Email ซ้ำ
+      if (error.response?.status === 409) {
+        setMessage("Email นี้ถูกใช้แล้ว");
+      } else {
+        setMessage(error.response?.data?.message || "เกิดข้อผิดพลาด");
+      }
       setShowModal(true);
     }
   };
+  
   
   return (
     <div className="auth-container">
