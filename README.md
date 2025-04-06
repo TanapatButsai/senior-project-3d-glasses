@@ -106,7 +106,7 @@ CREATE TABLE IF NOT EXISTS favorites (
 Users can launch the web application directly via a browser to begin using the system.
 
 ![image](https://github.com/user-attachments/assets/6ed37831-f4a3-4c67-a331-701353295254)
-*Figure B.1 Main interface of the application*
+*Figure Main interface of the application*
 
 2. Register
 New users can register to create an account. However, users who choose not to register will still be able to access some features, but certain functions will be restricted.
@@ -115,7 +115,7 @@ New users can register to create an account. However, users who choose not to re
 > **Email:** `admin@gmail.com`  
 > **Password:** `123456`
 ![image](https://github.com/user-attachments/assets/1ca769ed-8872-414b-845d-1355b345375c)
-*Figure B.2 Registration interface*
+*Figure Registration interface*
 
 
 3. Login for Users and Admins
@@ -123,34 +123,34 @@ Both users and administrators can log in through the login page. The system will
 
 > ✅ Make sure to use `admin@gmail.com` with password `123456` to log in as an **Admin**.
 ![image](https://github.com/user-attachments/assets/35f79e41-ef72-4c9b-a24e-1e35d3844860)
-*Figure B.3 Login interface*
+*Figure Login interface*
 
 4. Upload Glasses Models (Admin)
 Admins can upload 3D glasses model files (.obj) to the system.
 
 ![image](https://github.com/user-attachments/assets/8c8d4f83-21aa-4fb0-9a54-362833f630cf)
-*Figure B.4 Glasses upload interface*
+*Figure Glasses upload interface*
 
 5. Manage Glasses Models (Admin)
 This interface allows admins to edit or delete glasses models, categorize them, and manage their display status.
 
 ![image](https://github.com/user-attachments/assets/6308dcbb-bc34-4191-bb6e-7c6baade2853)
-*Figure B.5.1 Glasses management interface*
+*Figure Glasses management interface*
 ![image](https://github.com/user-attachments/assets/24e4f8de-1eba-4984-bf76-cc81e70dc3f6)
-*Figure B.5.2 Edit glasses information interface*
+*Figure Edit glasses information interface*
 ![image](https://github.com/user-attachments/assets/f9c19fb4-2f99-4f99-a64f-48e042bf2c56)
-*Figure B.5.3 Delete glasses model interface*
+*Figure Delete glasses model interface*
 
 6. Browse Glasses Models (User and Admin)
 All users can browse available glasses models and preview them. Logged-in users will see the Add to Favorites button, while guests (non-logged-in users) will not have access to this function.
 
 ![image](https://github.com/user-attachments/assets/2fad23cd-451e-434c-a412-6a0e93ef8b77)
-*Figure B.6.1 Browsing interface for guests*
+*Figure Browsing interface for guests*
 ![image](https://github.com/user-attachments/assets/a01a26c3-c16a-4495-a3bc-9b8108b12b35)
-*Figure B.6.2 Browsing interface for logged-in users*
+*Figure Browsing interface for logged-in users*
 
 7. Try-On Glasses (User)
 The system displays virtual glasses on the user's face in real-time using their webcam.
 ![image](https://github.com/user-attachments/assets/46a83e7c-a932-495f-8626-f546b25fb64b)
-*Figure B.7 Virtual try-on interface*
+*Figure Virtual try-on interface*
 
