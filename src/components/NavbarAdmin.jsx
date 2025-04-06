@@ -9,7 +9,7 @@ const NavbarAdmin = () => {
   return (
     <header className="navbar">
       {/* ✅ Logo */}
-      <div className="logo-wrapper" onClick={() => navigate("/")}>
+      <div className="logo-wrapper" onClick={() => navigate("/admin")}>
         <img src={logoImage} alt="Logo" className="logo-image" />
         <h1 className="logo-text">VirtualTryOn</h1>
       </div>
@@ -17,18 +17,12 @@ const NavbarAdmin = () => {
       {/* ✅ Navigation Links */}
       <nav>
         <ul className="nav-links">
-          {/* <li onClick={() => navigate("/admin")} className="nav-button">
-            Dashboard
-          </li> */}
           <li onClick={() => navigate("/model-management")} className="nav-button">
             Manage Models
           </li>
           <li onClick={() => navigate("/model-upload")} className="nav-button">
             Upload Model
           </li>
-          {/* <li onClick={() => navigate("/manage-users")} className="nav-button">
-            Manage Users
-          </li> */}
           <li onClick={() => navigate("/login")} className="logout-button">
             Logout
           </li>

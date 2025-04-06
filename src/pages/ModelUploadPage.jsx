@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import Navbar from "../components/Navbar";
+import NavbarAdmin from "../components/NavbarAdmin";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import "./ModelUploadPage.css";
@@ -141,7 +141,7 @@ const ModelUploadPage = () => {
 
   return (
     <div className="upload-container">
-      <Navbar />
+      <NavbarAdmin/>
 
       <div className="upload-form-container">
         <form onSubmit={handleSubmit} className="upload-form">

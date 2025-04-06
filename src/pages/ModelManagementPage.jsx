@@ -2,6 +2,8 @@ import React, { useEffect, useState, useRef } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
+import NavbarAdmin from "../components/NavbarAdmin"
 import axios from "axios";
 import "./ModelManagementPage.css"; // ✅ ใช้ CSS แยกเพื่อไม่ให้มีผลกับหน้าอื่น
 
@@ -71,7 +73,7 @@ const ModelManagementPage = () => {
 
   return (
     <div className="model-management-container">
-      <Navbar />
+      <NavbarAdmin/>
       <h1>Model Management</h1>
       <div className="model-management-list">
         {currentModels.map((model) => (
@@ -122,6 +124,7 @@ const ModelManagementPage = () => {
         >
           Next
         </button>
+        
       </div>
     </div>
   );

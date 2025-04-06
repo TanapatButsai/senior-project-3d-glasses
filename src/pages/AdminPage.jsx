@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import "./AdminPage.css";
 import NavbarAdmin from "../components/NavbarAdmin"; // Import Navbar
+import Footer from "../components/Footer";
 import { motion } from "framer-motion"; // ✅ Import Framer Motion
 
 const AdminPage = () => {
@@ -54,6 +55,9 @@ const AdminPage = () => {
         >
           <img src="/src/assets/welcome-image.png" alt="Virtual Try-On" />
         </motion.div>
+      </motion.div>
+      <motion.div>
+      <Footer/>
       </motion.div>
     </motion.div>
   );

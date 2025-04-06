@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import "./WelcomePage.css";
+import Footer from "../components/Footer";
 import Navbar from "../components/Navbar"; // Import Navbar
 import { motion } from "framer-motion"; // ✅ Import Framer Motion
 
@@ -56,6 +57,9 @@ const WelcomePage = () => {
         >
           <img src="/src/assets/welcome-image.png" alt="Virtual Try-On" />
         </motion.div>
+      </motion.div>
+      <motion.div>
+      <Footer/>
       </motion.div>
     </motion.div>
   );
