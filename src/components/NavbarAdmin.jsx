@@ -6,18 +6,23 @@ import logoImage from "../assets/icon-192x192.png"; // โลโก้
 const NavbarAdmin = () => {
   const navigate = useNavigate();
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("user_id");
+    navigate("/"); // ✅ กลับไปหน้าหลักหลัง logout
+  };
+
   return (
     <header className="navbar">
-      {/* ✅ Logo */}
       <div className="logo-wrapper" onClick={() => navigate("/admin")}>
         <img src={logoImage} alt="Logo" className="logo-image" />
         <h1 className="logo-text">VirtualTryOn</h1>
       </div>
 
-      {/* ✅ Navigation Links */}
       <nav>
         <ul className="nav-links">
-        <li onClick={() => navigate("/shop-admin")} className="nav-button">
+          <li onClick={() => navigate("/shop-admin")} className="nav-button">
             Try On Glasses
           </li>
           <li onClick={() => navigate("/model-management")} className="nav-button">
@@ -26,7 +31,7 @@ const NavbarAdmin = () => {
           <li onClick={() => navigate("/model-upload")} className="nav-button">
             Upload Model
           </li>
-          <li onClick={() => navigate("/login")} className="logout-button">
+          <li onClick={handleLogout} className="logout-button">
             Logout
           </li>
         </ul>
