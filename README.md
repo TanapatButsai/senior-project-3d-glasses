@@ -110,10 +110,11 @@ Users can launch the web application directly via a browser to begin using the s
 
 2. Register
 New users can register to create an account. However, users who choose not to register will still be able to access some features, but certain functions will be restricted.
-> 🛑 **Admin Access:**  
-> To access admin features, you must log in with the following credentials:  
-> **Email:** `admin@gmail.com`  
-> **Password:** `123456`
+> 🛑 **Admin Access:**
+
+ To access admin features, you must log in with the following credentials:  
+ **Email:** `admin@gmail.com`  
+ **Password:** `123456`
 
 ![image](https://github.com/user-attachments/assets/1ca769ed-8872-414b-845d-1355b345375c)
 *Figure Registration interface*
